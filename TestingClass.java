@@ -67,6 +67,7 @@ public class TestingClass {
 
         System.out.println("Result: " + shardedSNAPDependency.optimize());
         shardedSNAPDependency.printSolution();
+        System.out.println();
 
     }
 
