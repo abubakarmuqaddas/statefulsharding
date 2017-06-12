@@ -1,0 +1,770 @@
+package statefulsharding.MilpOpt;
+
+import ilog.concert.IloException;
+import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
+import statefulsharding.Pair;
+import statefulsharding.State.StateVariable;
+import statefulsharding.Traffic.TrafficDemand;
+import statefulsharding.Traffic.TrafficStore;
+import statefulsharding.graph.Edge;
+import statefulsharding.graph.ListGraph;
+import statefulsharding.graph.Vertex;
+import statefulsharding.randomgraphgen.ManhattanGraphGen;
+
+import java.util.HashMap;
+
+/**
+ * Created by root on 5/23/17.
+ */
+public class ShardedSNAPDependency {
+
+    public static void main(String[] args){
+
+        try {
+            int capacity = Integer.MAX_VALUE;
+
+            int size = 4;
+
+            ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
+                    ManhattanGraphGen.mType.UNWRAPPED, false, true);
+
+            ListGraph graph = manhattanGraphGen.getManhattanGraph();
+
+            TrafficStore trafficStore = new TrafficStore();
+
+            TrafficDemand trafficDemand1 = new TrafficDemand(graph.getVertex(0),
+                    graph.getVertex(11), 1);
+            trafficStore.addTrafficDemand(trafficDemand1);
+
+            IloCplex cplex = new IloCplex();
+
+
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Edge, IloNumVar>>> FlowsUA = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Integer, HashMap<Edge, IloNumVar>>>>
+                    FlowsAB = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Edge, IloNumVar>>> FlowsBV = new HashMap<>();
+
+            HashMap<Vertex, HashMap<Integer, IloNumVar>> PlacementA = new HashMap<>();
+            HashMap<Vertex, HashMap<Integer, IloNumVar>> PlacementB = new HashMap<>();
+
+            HashMap<TrafficDemand, HashMap<Integer, IloNumVar>> XA = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Integer, IloNumVar>>> XAB = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer, IloNumVar>> XB = new HashMap<>();
+
+
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                FlowsUA.put(trafficDemand, new HashMap<>());
+                FlowsBV.put(trafficDemand, new HashMap<>());
+                XA.put(trafficDemand, new HashMap<>());
+                XB.put(trafficDemand, new HashMap<>());
+                for (int copyA = 1; copyA <= 2; copyA++) {
+                    FlowsUA.get(trafficDemand).put(copyA, new HashMap<>());
+                    FlowsBV.get(trafficDemand).put(copyA, new HashMap<>());
+                    XA.get(trafficDemand)
+                            .put(copyA, cplex.boolVar("XA u: " + trafficDemand.getSource().getLabel()
+                                     + " v: "+ trafficDemand.getDestination().getLabel()
+                                     + " copy: " + copyA));
+                    XB.get(trafficDemand)
+                            .put(copyA, cplex.boolVar("XB u: " + trafficDemand.getSource().getLabel()
+                                    + " v: "+ trafficDemand.getDestination().getLabel()
+                                    + " copy: " + copyA));
+                    for (Edge edge : graph.getallEdges()) {
+                        FlowsUA.get(trafficDemand).get(copyA)
+                                .put(edge, cplex.boolVar("R_u_" +
+                                        trafficDemand.getSource().getLabel() + "_v_" +
+                                        trafficDemand.getDestination().getLabel() + "_copyA_" + copyA + "_i_" +
+                                        edge.getSource().getLabel() + "_j_" +
+                                        edge.getDestination().getLabel()));
+                        FlowsBV.get(trafficDemand).get(copyA)
+                                .put(edge, cplex.boolVar("R_u_" +
+                                        trafficDemand.getSource().getLabel() + "_v_" +
+                                        trafficDemand.getDestination().getLabel() + "_copyB_" + copyA + "_i_" +
+                                        edge.getSource().getLabel() + "_j_" +
+                                        edge.getDestination().getLabel()));
+                    }
+                }
+            }
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                FlowsAB.put(trafficDemand, new HashMap<>());
+                XAB.put(trafficDemand, new HashMap<>());
+                for (int copyA = 1; copyA <= 2; copyA++) {
+                    FlowsAB.get(trafficDemand).put(copyA, new HashMap<>());
+                    XAB.get(trafficDemand).put(copyA, new HashMap<>());
+                    for (int copyB = 1; copyB <= 2; copyB++) {
+                        FlowsAB.get(trafficDemand).get(copyA).put(copyB, new HashMap<>());
+                        XAB.get(trafficDemand).get(copyA)
+                                .put(copyB, cplex.boolVar("XAB u: " + trafficDemand.getSource().getLabel()
+                                        + " v: "+ trafficDemand.getDestination().getLabel()
+                                        + " copyA: " + copyA + " copyB: " + copyB));
+                        for (Edge edge : graph.getallEdges()) {
+                            FlowsAB.get(trafficDemand).get(copyA).get(copyB)
+                                    .put(edge, cplex.boolVar("RABij_copyA_" + copyA + "_copyB_" + copyB + "_" +
+                                            trafficDemand.getSource().getLabel() + "_" +
+                                            trafficDemand.getDestination().getLabel() + "_" +
+                                            edge.getSource().getLabel() + "_" +
+                                            edge.getDestination().getLabel()));
+                        }
+                    }
+                }
+            }
+
+            for (Vertex vertex : graph.getVertices()){
+                PlacementA.put(vertex, new HashMap<>());
+                PlacementB.put(vertex, new HashMap<>());
+                for (int copyA = 1; copyA <= 2; copyA++) {
+                    PlacementA.get(vertex).put(copyA,cplex.boolVar("PA_" + copyA +"_" + vertex.getLabel()));
+                    PlacementB.get(vertex).put(copyA,cplex.boolVar("PB_" + copyA +"_" + vertex.getLabel()));
+                }
+            }
+
+            /**
+             * Objective:
+             */
+            IloLinearNumExpr objective = cplex.linearNumExpr();
+            for (TrafficDemand trafficDemand : FlowsUA.keySet()) {
+                for (Integer copy : FlowsUA.get(trafficDemand).keySet()) {
+                    for (Edge edge : FlowsUA.get(trafficDemand).get(copy).keySet()) {
+                        objective.addTerm(trafficDemand.getDemand(), FlowsUA
+                                .get(trafficDemand)
+                                .get(copy)
+                                .get(edge));
+                        objective.addTerm(trafficDemand.getDemand(), FlowsBV
+                                .get(trafficDemand)
+                                .get(copy)
+                                .get(edge));
+                    }
+                }
+            }
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                for (int copyA = 1; copyA <= 2; copyA++) {
+                    for (int copyB = 1; copyB <= 2; copyB++) {
+                        for (Edge edge : graph.getallEdges()) {
+                            objective.addTerm(trafficDemand.getDemand(), FlowsAB
+                                    .get(trafficDemand)
+                                    .get(copyA)
+                                    .get(copyB)
+                                    .get(edge));
+                        }
+                    }
+                }
+            }
+            cplex.addMinimize(objective);
+
+            /**
+             *
+             Defining incoming and outgoing flows of a node
+             *
+             */
+
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Vertex, IloLinearNumExpr>>> IncomingFlowsA =
+                    new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Vertex, IloLinearNumExpr>>> OutgoingFlowsA =
+                    new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer,HashMap<Vertex,IloLinearNumExpr>>> IncomingFlowsB =
+                    new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer,HashMap<Vertex,IloLinearNumExpr>>> OutgoingFlowsB =
+                    new HashMap<>();
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+
+                IncomingFlowsA.putIfAbsent(trafficDemand, new HashMap<>());
+                OutgoingFlowsA.putIfAbsent(trafficDemand, new HashMap<>());
+                IncomingFlowsB.putIfAbsent(trafficDemand, new HashMap<>());
+                OutgoingFlowsB.putIfAbsent(trafficDemand, new HashMap<>());
+
+                for (Integer copy : FlowsUA.get(trafficDemand).keySet()){
+
+                    IncomingFlowsA.get(trafficDemand).putIfAbsent(copy, new HashMap<>());
+                    OutgoingFlowsA.get(trafficDemand).putIfAbsent(copy, new HashMap<>());
+                    IncomingFlowsB.get(trafficDemand).putIfAbsent(copy, new HashMap<>());
+                    OutgoingFlowsB.get(trafficDemand).putIfAbsent(copy, new HashMap<>());
+
+                    for(Vertex n : graph.getVertices()) {
+                        IncomingFlowsA.get(trafficDemand).get(copy).put(n, cplex.linearNumExpr());
+                        IncomingFlowsB.get(trafficDemand).get(copy).put(n,cplex.linearNumExpr());
+
+                        for (Vertex i : graph.getPredecessors(n)){
+                            IncomingFlowsA
+                                    .get(trafficDemand)
+                                    .get(copy)
+                                    .get(n)
+                                    .addTerm(1.0, FlowsUA.get(trafficDemand).get(copy).get(graph.getEdge(i,n)));
+
+                            IncomingFlowsB
+                                    .get(trafficDemand)
+                                    .get(copy)
+                                    .get(n)
+                                    .addTerm(1.0,FlowsBV.get(trafficDemand).get(copy).get(graph.getEdge(i,n)));
+                        }
+
+                        OutgoingFlowsA.get(trafficDemand).get(copy).put(n,cplex.linearNumExpr());
+                        OutgoingFlowsB.get(trafficDemand).get(copy).put(n,cplex.linearNumExpr());
+
+                        for (Vertex j : graph.getSuccessors(n)){
+                            OutgoingFlowsA
+                                    .get(trafficDemand)
+                                    .get(copy)
+                                    .get(n)
+                                    .addTerm(1.0,FlowsUA.get(trafficDemand).get(copy).get(graph.getEdge(n,j)));
+                        }
+
+                        for (Vertex j : graph.getSuccessors(n)){
+                            OutgoingFlowsB
+                                    .get(trafficDemand)
+                                    .get(copy)
+                                    .get(n)
+                                    .addTerm(1.0,FlowsBV.get(trafficDemand).get(copy).get(graph.getEdge(n,j)));
+                        }
+
+                        /*
+                        if (!n.equals(trafficDemand.getSource()) && !n.equals(trafficDemand.getDestination())){
+                            cplex.addEq(IncomingFlowsA.get(trafficDemand).get(copy).get(n),
+                                    OutgoingFlowsA.get(trafficDemand).get(copy).get(n));
+
+                        }
+                        */
+                    }
+                }
+            }
+
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Integer, HashMap<Vertex,IloLinearNumExpr>>>>
+                    IncomingFlowsAB = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<Integer, HashMap<Integer, HashMap<Vertex,IloLinearNumExpr>>>>
+                    OutgoingFlowsAB = new HashMap<>();
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+
+                IncomingFlowsAB.putIfAbsent(trafficDemand, new HashMap<>());
+                OutgoingFlowsAB.putIfAbsent(trafficDemand, new HashMap<>());
+
+                for (Integer copyA : FlowsAB.get(trafficDemand).keySet()){
+
+                    IncomingFlowsAB.get(trafficDemand).putIfAbsent(copyA, new HashMap<>());
+                    OutgoingFlowsAB.get(trafficDemand).putIfAbsent(copyA, new HashMap<>());
+
+                    for (Integer copyB : FlowsAB.get(trafficDemand).keySet()) {
+
+                        IncomingFlowsAB.get(trafficDemand).get(copyA).putIfAbsent(copyB, new HashMap<>());
+                        OutgoingFlowsAB.get(trafficDemand).get(copyA).putIfAbsent(copyB, new HashMap<>());
+
+
+                        for (Vertex n : graph.getVertices()) {
+                            IncomingFlowsAB.get(trafficDemand).get(copyA).get(copyB).put(n, cplex.linearNumExpr());
+                            for (Vertex i : graph.getPredecessors(n)) {
+                                IncomingFlowsAB
+                                        .get(trafficDemand)
+                                        .get(copyA)
+                                        .get(copyB)
+                                        .get(n)
+                                        .addTerm(1.0, FlowsAB.get(trafficDemand).get(copyA)
+                                                .get(copyB).get(graph.getEdge(i, n)));
+
+                            }
+
+                            OutgoingFlowsAB.get(trafficDemand).get(copyA).get(copyB).put(n, cplex.linearNumExpr());
+
+                            for (Vertex j : graph.getSuccessors(n)) {
+                                OutgoingFlowsAB
+                                        .get(trafficDemand)
+                                        .get(copyA)
+                                        .get(copyB)
+                                        .get(n)
+                                        .addTerm(1.0, FlowsAB.get(trafficDemand).get(copyA).get(copyB)
+                                                .get(graph.getEdge(n, j)));
+                            }
+
+
+
+                        /*
+                        if (!n.equals(trafficDemand.getSource()) && !n.equals(trafficDemand.getDestination())){
+                            cplex.addEq(IncomingFlowsA.get(trafficDemand).get(copy).get(n),
+                                    OutgoingFlowsA.get(trafficDemand).get(copy).get(n));
+
+                        }
+                        */
+                        }
+
+                    }
+                }
+            }
+
+            /*
+            Source
+             */
+            HashMap<TrafficDemand, IloLinearNumExpr> SourceIncomingUA = new HashMap<>();
+            HashMap<TrafficDemand, IloLinearNumExpr> SourceOutgoingUA = new HashMap<>();
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+
+                SourceIncomingUA.putIfAbsent(trafficDemand,cplex.linearNumExpr());
+                SourceOutgoingUA.putIfAbsent(trafficDemand,cplex.linearNumExpr());
+
+                Vertex source = trafficDemand.getSource();
+
+                for (Integer copy : FlowsUA.get(trafficDemand).keySet()){
+                    for (Vertex vertex : graph.getSuccessors(source)) {
+                        SourceOutgoingUA.get(trafficDemand)
+                                        .addTerm(1.0, FlowsUA
+                                        .get(trafficDemand)
+                                        .get(copy)
+                                        .get(graph.getEdge(source, vertex)));
+
+                    }
+                    for (Vertex vertex : graph.getPredecessors(source)) {
+                        SourceIncomingUA.get(trafficDemand)
+                                        .addTerm(1.0, FlowsUA
+                                        .get(trafficDemand)
+                                        .get(copy)
+                                        .get(graph.getEdge(vertex, source)));
+
+                    }
+                }
+
+                cplex.addEq(SourceOutgoingUA.get(trafficDemand),
+                            cplex.sum(
+                                    SourceIncomingUA.get(trafficDemand),
+                                    cplex.constant(1)),"Source outgoing - incoming = 1, source: " +
+                                    source.getLabel());
+            }
+
+            /*
+            Destination
+             */
+
+            HashMap<TrafficDemand, IloLinearNumExpr> DstIncomingBV = new HashMap<>();
+            HashMap<TrafficDemand, IloLinearNumExpr> DstOutgoingBV= new HashMap<>();
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+
+                DstIncomingBV.putIfAbsent(trafficDemand, cplex.linearNumExpr());
+                DstOutgoingBV.putIfAbsent(trafficDemand, cplex.linearNumExpr());
+
+                Vertex destination = trafficDemand.getDestination();
+
+                for (Integer copy : FlowsBV.get(trafficDemand).keySet()){
+                    for (Vertex vertex : graph.getSuccessors(destination)) {
+                        DstOutgoingBV
+                                .get(trafficDemand)
+                                .addTerm(1.0, FlowsBV
+                                        .get(trafficDemand)
+                                        .get(copy)
+                                        .get(graph.getEdge(destination, vertex)));
+                    }
+                    for (Vertex vertex : graph.getPredecessors(destination)) {
+                        DstIncomingBV.get(trafficDemand)
+                                .addTerm(1.0, FlowsBV
+                                        .get(trafficDemand)
+                                        .get(copy)
+                                        .get(graph.getEdge(vertex, destination)));
+
+                    }
+                }
+
+                cplex.addEq(DstIncomingBV.get(trafficDemand),
+                        cplex.sum(
+                                DstOutgoingBV.get(trafficDemand),
+                                cplex.constant(1)),"Dst in - out = 1, dst: " +
+                                destination.getLabel());
+            }
+
+
+            /**
+             *
+             * Copies cannot be placed in the same switch
+             * \sum_c P_{cn} \le 1
+             * \forall n
+             *
+             */
+
+            IloLinearNumExpr tempA;
+            IloLinearNumExpr tempB;
+            for (Vertex vertex: graph.getVertices()){
+                tempA = cplex.linearNumExpr();
+                tempB = cplex.linearNumExpr();
+                for (int copy = 1 ; copy<=2 ; copy++){
+                    tempA.addTerm(1.0,PlacementA.get(vertex).get(copy));
+                    tempB.addTerm(1.0,PlacementB.get(vertex).get(copy));
+                }
+                cplex.addLe(tempA,1.0);
+                cplex.addLe(tempB,1.0);
+            }
+
+            /**
+             *
+             * Each copy is at only 1 switch
+             * \sum_n P_{cn} = 1
+             * \forall c
+             *
+             */
+
+            IloLinearNumExpr temp2A;
+            IloLinearNumExpr temp2B;
+            for (int copy = 1 ; copy<=2; copy++){
+                temp2A = cplex.linearNumExpr();
+                temp2B = cplex.linearNumExpr();
+                for (Vertex vertex: graph.getVertices()){
+                    temp2A.addTerm(1.0,PlacementA.get(vertex).get(copy));
+                    temp2B.addTerm(1.0,PlacementB.get(vertex).get(copy));
+                }
+                cplex.addEq(temp2A,1.0);
+                cplex.addEq(temp2B,1.0);
+            }
+
+            /**
+             * Sum of all X in each stage should be 1
+             *
+             * HashMap<TrafficDemand, HashMap<Integer, IloNumVar>> XA = new HashMap<>();
+             *
+             */
+
+            for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+                IloLinearNumExpr tmpXA = cplex.linearNumExpr();
+                IloLinearNumExpr tmpXAB = cplex.linearNumExpr();
+                IloLinearNumExpr tmpXB = cplex.linearNumExpr();
+
+                for(Integer copyA : XA.get(trafficDemand).keySet()){
+
+                    tmpXA.addTerm(1.0, XA.get(trafficDemand).get(copyA));
+
+                    for(Integer copyB : XAB.get(trafficDemand).get(copyA).keySet()){
+
+                        tmpXAB.addTerm(1.0, XAB.get(trafficDemand).get(copyA).get(copyB));
+                    }
+
+                }
+
+                for(Integer copyB : XB.get(trafficDemand).keySet()){
+                    tmpXB.addTerm(1.0, XB.get(trafficDemand).get(copyB));
+                }
+
+                cplex.addEq(tmpXA,1.0);
+                cplex.addEq(tmpXAB,1.0);
+                cplex.addEq(tmpXB,1.0);
+            }
+
+            /**
+             * Interlinking each stage!
+             */
+
+            for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+
+                for (Integer copyA : XA.get(trafficDemand).keySet()){
+
+                    IloLinearNumExpr tmpXA1 = cplex.linearNumExpr();
+
+                    for (Integer copyB : XAB.get(trafficDemand).get(copyA).keySet()){
+
+                        tmpXA1.addTerm(1.0, XAB.get(trafficDemand).get(copyA).get(copyB));
+
+                    }
+
+                    cplex.addEq(XA.get(trafficDemand).get(copyA),tmpXA1);
+
+                }
+
+                for (Integer copyB : XB.get(trafficDemand).keySet()){
+
+                    IloLinearNumExpr tmpXB1 = cplex.linearNumExpr();
+
+                    for (Integer copyA : XAB.get(trafficDemand).keySet()){
+
+                        tmpXB1.addTerm(1.0, XAB.get(trafficDemand).get(copyA).get(copyB));
+
+                    }
+
+                    cplex.addEq(tmpXB1,XB.get(trafficDemand).get(copyB));
+
+                }
+            }
+
+
+
+            /**
+             * Linking R with X
+             */
+
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+                Vertex source = trafficDemand.getSource();
+                Vertex destination = trafficDemand.getDestination();
+
+                for (Integer copyA : FlowsUA.get(trafficDemand).keySet()){
+                    cplex.addEq(XA.get(trafficDemand).get(copyA),
+                            OutgoingFlowsA.get(trafficDemand).get(copyA).get(source));
+                }
+
+                for (Integer copyB : FlowsBV.get(trafficDemand).keySet()){
+                    cplex.addEq(XB.get(trafficDemand).get(copyB),
+                            IncomingFlowsB.get(trafficDemand).get(copyB).get(destination));
+                }
+            }
+
+
+
+            for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+
+                for (Integer copyA : FlowsUA.get(trafficDemand).keySet()) {
+
+                    /**
+                     * Flow conservation at Stage 1!
+                     */
+
+                    for (Vertex vertex : graph.getVertices()) {
+
+                        if(!trafficDemand.getSource().equals(vertex) &&
+                                !trafficDemand.getDestination().equals(vertex))
+                        cplex.addEq(IncomingFlowsA.get(trafficDemand).get(copyA).get(vertex),
+                                cplex.sum(OutgoingFlowsA.get(trafficDemand).get(copyA).get(vertex),
+                                        PlacementA.get(vertex).get(copyA)));
+
+
+                        /**
+                         * Source for stage 2
+                        * */
+
+                        IloLinearNumExpr stage1 = cplex.linearNumExpr();
+
+                        for(Integer copyB : FlowsAB.get(trafficDemand).get(copyA).keySet()){
+                            for (Vertex successor: graph.getSuccessors(vertex)){
+                                stage1.addTerm(1.0,
+                                        FlowsAB.get(trafficDemand).get(copyA).get(copyB).
+                                                get(graph.getEdge(vertex, successor)));
+
+                            }
+                        }
+
+                        cplex.addGe(stage1, PlacementA.get(vertex).get(copyA));
+                    }
+                }
+
+                /**
+                 * Flow conservation at Stage 2!
+                 */
+
+//                for(Vertex vertex : graph.getVertices()){
+//                    for (Integer copyA : FlowsAB.get(trafficDemand).keySet()){
+//
+//                        for (Integer copyB : FlowsAB.get(trafficDemand).get(copyA).keySet()){
+//
+//                            cplex.addEq(IncomingFlowsAB.get(trafficDemand).get(copyA).get(copyB).get(vertex),
+//                                    cplex.sum(OutgoingFlowsAB.get(trafficDemand).get(copyA).get(copyB).get(vertex),
+//                                            PlacementB.get(vertex).get(copyB)));
+//                        }
+//                    }
+//                }
+//
+//
+//
+//                for(Vertex vertex : graph.getVertices()){
+//                    for(Integer copyB : FlowsAB.get(trafficDemand).keySet()){
+//                        /**
+//                         * Source for stage 3
+//                         * */
+//                        cplex.addGe(OutgoingFlowsB.get(trafficDemand).get(copyB).get(vertex),
+//                                PlacementB.get(vertex).get(copyB));
+//                        /**
+//                         * Sink for stage 3
+//                         */
+//
+//                        cplex.addEq(IncomingFlowsB.get(trafficDemand).get(copyB).get(vertex),
+//                                OutgoingFlowsB.get(trafficDemand).get(copyB).get(vertex));
+//                    }
+//                }
+
+            }
+
+
+
+
+
+            /**
+             * R>P+X-1
+             */
+
+
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+                for (Vertex vertex : graph.getVertices()){
+
+                    for (Integer copyA : FlowsUA.get(trafficDemand).keySet()){
+                        cplex.addGe(IncomingFlowsA.get(trafficDemand).get(copyA).get(vertex),
+                                cplex.sum(PlacementA.get(vertex).get(copyA),
+                                        XA.get(trafficDemand).get(copyA),cplex.constant(-1.0)));
+
+                        for (Integer copyB : FlowsAB.get(trafficDemand).get(copyA).keySet()){
+
+                            cplex.addGe(IncomingFlowsAB.get(trafficDemand).get(copyA).get(copyB).get(vertex),
+                                    cplex.sum(PlacementB.get(vertex).get(copyB),
+                                            XAB.get(trafficDemand).get(copyA).get(copyB),cplex.constant(-1.0)));
+                        }
+
+                    }
+                }
+            }
+
+
+
+
+            /**
+             * Fixing constraint!
+             *
+             */
+
+            cplex.addEq(PlacementA.get(graph.getVertex(2)).get(1),1.0);
+            cplex.addEq(PlacementB.get(graph.getVertex(7)).get(1),1.0);
+
+            cplex.addEq(PlacementA.get(graph.getVertex(12)).get(2),1.0);
+            cplex.addEq(PlacementB.get(graph.getVertex(14)).get(2),1.0);
+
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                if (trafficDemand.getSource().getLabel()==0 && trafficDemand.getDestination().getLabel()==11){
+                    for (Integer copyA : FlowsUA.get(trafficDemand).keySet()) {
+                        for (Edge edge : FlowsUA.get(trafficDemand).get(copyA).keySet()) {
+                            if (copyA==1){
+                                if (edge.getSource().getLabel()==0 && edge.getDestination().getLabel()==1)
+                                    cplex.addEq(FlowsUA.get(trafficDemand).get(copyA).get(edge),1.0);
+                                else if (edge.getSource().getLabel()==1 && edge.getDestination().getLabel()==2)
+                                    cplex.addEq(FlowsUA.get(trafficDemand).get(copyA).get(edge),1.0);
+                                else
+                                    cplex.addEq(FlowsUA.get(trafficDemand).get(copyA).get(edge),0.0);
+                            }
+                            else
+                                cplex.addEq(FlowsUA.get(trafficDemand).get(copyA).get(edge),0.0);
+                        }
+                    }
+                    for (Integer copyA : FlowsAB.get(trafficDemand).keySet()) {
+                        for (Integer copyB : FlowsAB.get(trafficDemand).get(copyA).keySet()) {
+                            for (Edge edge : FlowsAB.get(trafficDemand).get(copyA).get(copyB).keySet()) {
+                                if (copyA == 1 && copyB == 1) {
+                                    if (edge.getSource().getLabel() == 2 && edge.getDestination().getLabel() == 3)
+                                        cplex.addEq(FlowsAB.get(trafficDemand).get(copyA).get(copyB).get(edge), 1.0);
+                                    else if (edge.getSource().getLabel() == 3 && edge.getDestination().getLabel() == 7)
+                                        cplex.addEq(FlowsAB.get(trafficDemand).get(copyA).get(copyB).get(edge), 1.0);
+                                    else
+                                        cplex.addEq(FlowsAB.get(trafficDemand).get(copyA).get(copyB).get(edge), 0.0);
+                                } else
+                                    cplex.addEq(FlowsAB.get(trafficDemand).get(copyA).get(copyB).get(edge), 0.0);
+                            }
+                        }
+                    }
+                    for (Integer copyB : FlowsBV.get(trafficDemand).keySet()) {
+                        for (Edge edge : FlowsBV.get(trafficDemand).get(copyB).keySet()) {
+                            if (copyB==1){
+                                if (edge.getSource().getLabel()==7 && edge.getDestination().getLabel()==11)
+                                    cplex.addEq(FlowsBV.get(trafficDemand).get(copyB).get(edge),1.0);
+                                else
+                                    cplex.addEq(FlowsBV.get(trafficDemand).get(copyB).get(edge),0.0);
+                            }
+                            else
+                                cplex.addEq(FlowsBV.get(trafficDemand).get(copyB).get(edge),0.0);
+                        }
+                    }
+                }
+            }
+
+
+            cplex.exportModel("test_depShardedSNAP.lp");
+
+            cplex.solve();
+
+            for (TrafficDemand trafficDemand : FlowsUA.keySet()) {
+                for (Integer copyA : FlowsUA.get(trafficDemand).keySet()) {
+                    for (Edge edge : FlowsUA.get(trafficDemand).get(copyA).keySet()) {
+                        if (cplex.getValue(FlowsUA.get(trafficDemand).get(copyA).get(edge)) > 0) {
+                            System.out.println("RA, Copy: " + copyA + ", Traffic: " +
+                                    trafficDemand.getSource().getLabel() + " -> " +
+                                    trafficDemand.getDestination().getLabel() + ", Edge: " +
+                                    edge.getSource().getLabel() + " -> " +
+                                    edge.getDestination().getLabel());
+                        }
+                    }
+                }
+
+                System.out.println();
+
+                for (Integer copyB : FlowsBV.get(trafficDemand).keySet()) {
+                    for (Edge edge : FlowsBV.get(trafficDemand).get(copyB).keySet()) {
+                        if (cplex.getValue(FlowsBV.get(trafficDemand).get(copyB).get(edge)) > 0) {
+                            System.out.println("RB, Copy: " + copyB + ", Traffic: " +
+                                    trafficDemand.getSource().getLabel() + " -> " +
+                                    trafficDemand.getDestination().getLabel() + ", Edge: " +
+                                    edge.getSource().getLabel() + " -> " +
+                                    edge.getDestination().getLabel());
+                        }
+                    }
+                }
+
+                System.out.println();
+
+                for (Integer copyA : FlowsUA.get(trafficDemand).keySet()) {
+                    for (Integer copyB : FlowsAB.get(trafficDemand).get(copyA).keySet()) {
+                        for (Edge edge : FlowsAB.get(trafficDemand).get(copyA).get(copyB).keySet()) {
+                            if (cplex.getValue(FlowsAB.get(trafficDemand).get(copyA).get(copyB).get(edge)) > 0) {
+                                System.out.println("RAB copyA: " + copyA + ", copyB: " + copyB +  ", Traffic: " +
+                                        trafficDemand.getSource().getLabel() + " -> " +
+                                        trafficDemand.getDestination().getLabel() + ", Edge: " +
+                                        edge.getSource().getLabel() + " -> " +
+                                        edge.getDestination().getLabel());
+                            }
+                        }
+                    }
+                }
+
+                System.out.println();
+
+                for (Integer copyA : XA.get(trafficDemand).keySet()){
+                    if (cplex.getValue(XA.get(trafficDemand).get(copyA)) > 0) {
+                        System.out.println("XA copy: " + copyA);
+                    }
+                }
+
+                System.out.println();
+
+                for (Integer copyB : XB.get(trafficDemand).keySet()){
+                    if (cplex.getValue(XB.get(trafficDemand).get(copyB)) > 0) {
+                        System.out.println("XB copy: " + copyB);
+                    }
+                }
+
+                System.out.println();
+
+                for (Integer copyA : XAB.get(trafficDemand).keySet()) {
+                    for (Integer copyB : XAB.get(trafficDemand).get(copyA).keySet()) {
+                        if (cplex.getValue(XAB.get(trafficDemand).get(copyA).get(copyB)) > 0) {
+                            System.out.println("XAB copyA: " + copyA + ", copyB: " + copyB);
+                        }
+                    }
+                }
+
+                System.out.println();
+            }
+
+            for (Vertex vertex : graph.getVertices()) {
+                for (Integer copyA : PlacementA.get(vertex).keySet()) {
+                    if (cplex.getValue(PlacementA.get(vertex).get(copyA)) > 0) {
+                        System.out.println("PA copy: " + copyA + ", node: " + vertex.getLabel());
+                    }
+                    if (cplex.getValue(PlacementB.get(vertex).get(copyA)) > 0) {
+                        System.out.println("PB copy: " + copyA + ", node: " + vertex.getLabel());
+                    }
+                }
+            }
+
+
+
+        }
+        catch(IloException e){
+            System.err.println("Concert exception caught:"  +  e);
+        }
+
+    }
+
+
+
+}
+
