@@ -595,6 +595,37 @@ public class ShardedSNAPDependency {
              *
              */
 
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                for (List<StateCopy> stateCopies: Flows.get(trafficDemand).keySet()) {
+                    for(StateCopy stateCopy : stateCopies) {
+                        IloLinearNumExpr sourceTemp = cplex.linearNumExpr();
+                        for (Vertex vertex : graph.getSuccessors(trafficDemand.getSource())) {
+                            if (!vertex.equals(trafficDemand.getSource()) ||
+                                    trafficDemand.getSource().equals(trafficDemand.getDestination())) {
+                                sourceTemp.addTerm(1.0, Flows
+                                        .get(trafficDemand)
+                                        .get(stateCopies)
+                                        .get(graph.getEdge(trafficDemand.getSource(), vertex)));
+                            }
+                        }
+                        if (!trafficDemand.getSource().equals(trafficDemand.getDestination())) {
+                            for (Vertex vertex : graph.getPredecessors(trafficDemand.getSource())) {
+                                sourceTemp.addTerm(-1.0, Flows
+                                        .get(trafficDemand)
+                                        .get(stateCopies)
+                                        .get(graph.getEdge(vertex, trafficDemand.getSource())));
+                            }
+                        }
+
+                        cplex.addGe(sourceTemp, Y.get(trafficDemand)
+                                        .get(stateCopies)
+                                        .get(stateCopy)
+                                        .get(trafficDemand.getSource())
+                        );
+                    }
+                }
+            }
+
 
 
             /**
@@ -909,10 +940,10 @@ public class ShardedSNAPDependency {
                                     .get(stateCopy)
                                     .get(edge))>0)
                                 System.out.println("Pcuvij_" +
-                                        StateCopyCombinationToString(stateCopyCombination) + "_(" +
-                                        stateCopy.getStateCopyString() + ")_" +
                                         trafficDemand.getSource().getLabel() + "_" +
                                         trafficDemand.getDestination().getLabel() + "_" +
+                                        StateCopyCombinationToString(stateCopyCombination) + "_(" +
+                                        stateCopy.getStateCopyString() + ")_" +
                                         edge.getSource().getLabel() + "_" +
                                         edge.getDestination().getLabel() + " = 1.0");
                         }
@@ -938,11 +969,11 @@ public class ShardedSNAPDependency {
                             if(cplex.getValue(Y.get(trafficDemand).get(stateCopyCombination)
                                     .get(stateCopy).get(vertex))>0)
                                 System.out.println(
-                                        "Ycuvn_" + StateCopyCombinationToString(stateCopyCombination) + "_(" +
+                                        "Ycuvn_" + trafficDemand.getSource().getLabel() + "_" +
+                                                + trafficDemand.getDestination().getLabel() + "_"
+                                                + StateCopyCombinationToString(stateCopyCombination) + "_(" +
                                                 stateCopy.getStateCopyString() + ")_"
-                                                + trafficDemand.getSource().getLabel()
-                                                + "_" + trafficDemand.getDestination().getLabel()
-                                                + "_" + vertex.getLabel()
+                                                 + vertex.getLabel()
                                 );
                         }
                     }
@@ -1022,20 +1053,24 @@ public class ShardedSNAPDependency {
             for (Vertex vertex : graph.getVertices()) {
                 for (StateVariable stateVariable : stateStore.getStateVariables()) {
                     for (StateCopy stateCopy : stateStore.getStateCopies(stateVariable)) {
-                        if(stateCopy.getState().getLabel()=="A" && stateCopy.getCopyNumber()==1
-                                && vertex.getLabel()==1){
+                        if(stateCopy.getState().getLabel()=="A" &&
+                                stateCopy.getCopyNumber()==1 &&
+                                vertex.getLabel()==0){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-                        else if(stateCopy.getState().getLabel()=="A" && stateCopy.getCopyNumber()==2
-                                && vertex.getLabel()==13){
+                        else if(stateCopy.getState().getLabel()=="A" &&
+                                stateCopy.getCopyNumber()==2 &&
+                                vertex.getLabel()==14){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-                        else if(stateCopy.getState().getLabel()=="B" && stateCopy.getCopyNumber()==1
-                                && vertex.getLabel()==3){
+                        else if(stateCopy.getState().getLabel()=="B" &&
+                                stateCopy.getCopyNumber()==1 &&
+                                vertex.getLabel()==0){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-                        else if(stateCopy.getState().getLabel()=="B" && stateCopy.getCopyNumber()==2
-                                && vertex.getLabel()==9){
+                        else if(stateCopy.getState().getLabel()=="B" &&
+                                stateCopy.getCopyNumber()==2 &&
+                                vertex.getLabel()==13){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
                         else{
@@ -1044,6 +1079,7 @@ public class ShardedSNAPDependency {
                     }
                 }
             }
+
 
             LinkedList<String> StringAB = new LinkedList<>(); StringAB.add("A"); StringAB.add("B");
             LinkedList<Integer> int11 = new LinkedList<>(); int11.add(1); int11.add(1);
@@ -1056,7 +1092,7 @@ public class ShardedSNAPDependency {
             //List<StateCopy> A2B1 = getListStateCopy(StringAB,int21);
             //List<StateCopy> A2B2 = getListStateCopy(StringAB,int22);
 
-
+            /*
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
                 for(List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()){
@@ -1083,8 +1119,9 @@ public class ShardedSNAPDependency {
                 }
             }
 
+            */
 
-
+            /*
             StateCopy A1 = stateStore.getStateCopy("A",1);
             StateCopy B1 = stateStore.getStateCopy("B",1);
 
@@ -1132,7 +1169,7 @@ public class ShardedSNAPDependency {
                 }
             }
 
-
+            */
 
         }
         catch (IloException e) {
