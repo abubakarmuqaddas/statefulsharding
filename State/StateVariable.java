@@ -15,6 +15,7 @@ public class StateVariable {
 
     public StateVariable(String label){
         this.label=label;
+        this.copies = 1;
     }
 
     public String getLabel(){

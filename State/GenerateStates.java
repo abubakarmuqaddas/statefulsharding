@@ -14,12 +14,10 @@ import java.util.LinkedList;
  */
 public class GenerateStates {
 
-    public static LinkedList<LinkedList<StateVariable>> BinaryTreeGenerator(int numStates){
+    public static LinkedList<LinkedList<StateVariable>> BinaryTreeGenerator(int numStates, StateStore stateStore){
 
         BinaryTree binaryTree = new BinaryTree(numStates);
         ListGraph graph = binaryTree.getGraph();
-
-        StateStore stateStore = new StateStore();
 
         LinkedList<LinkedList<StateVariable>> dependencies = new LinkedList<>();
 
