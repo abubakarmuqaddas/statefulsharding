@@ -40,6 +40,7 @@ public class ListGraph {
      * @param label: label identifies a vertex
      */
     public void addVertex(Integer label){
+
         vertexMap.put(label,new Vertex(label));
         numVertices++;
     }
