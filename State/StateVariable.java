@@ -18,6 +18,10 @@ public class StateVariable {
         this.copies = 1;
     }
 
+    public void setCopies(int copies){
+        this.copies = copies;
+    }
+
     public String getLabel(){
         return label;
     }

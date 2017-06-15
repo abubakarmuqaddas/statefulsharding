@@ -4,18 +4,15 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-
+import statefulsharding.State.StateCopy;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
-import statefulsharding.State.StateCopy;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficStore;
-
 import statefulsharding.graph.Edge;
 import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
 
-import javax.swing.plaf.nimbus.State;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,7 +21,7 @@ import java.util.List;
 /**
  * Created by root on 5/23/17.
  */
-public class ShardedSNAPDependency {
+public class ShardedSNAPDependency2 {
 
     private ListGraph graph;
     private TrafficStore trafficStore;
@@ -41,10 +38,10 @@ public class ShardedSNAPDependency {
     private HashMap<TrafficDemand, HashMap<List<StateCopy>,
             HashMap<StateCopy, HashMap<Vertex, IloNumVar>>>> Y;
 
-    public ShardedSNAPDependency(ListGraph graph, TrafficStore trafficStore,
-                                 HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
-                                 OptimizationOptions options,
-                                 StateStore stateStore){
+    public ShardedSNAPDependency2(ListGraph graph, TrafficStore trafficStore,
+                                  HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
+                                  OptimizationOptions options,
+                                  StateStore stateStore){
 
         this.graph = graph;
         this.trafficStore = trafficStore;
@@ -270,40 +267,35 @@ public class ShardedSNAPDependency {
 
                 for (List<StateCopy> stateCopyCombination : combinations.get(trafficDemand)) {
                     for (Vertex vertex : graph.getSuccessors(trafficDemand.getSource())) {
-                        if (!vertex.equals(trafficDemand.getSource()) ||
-                                trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                            SourceOutgoing
+                        SourceOutgoing
+                            .get(trafficDemand)
+                            .addTerm(1.0,Flows
                                     .get(trafficDemand)
-                                    .addTerm(1.0,Flows
-                                            .get(trafficDemand)
-                                            .get(stateCopyCombination)
-                                            .get(graph.getEdge(trafficDemand.getSource(), vertex)));
-                        }
+                                    .get(stateCopyCombination)
+                                    .get(graph.getEdge(trafficDemand.getSource(), vertex)));
                     }
-                    if (!trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                        for (Vertex vertex : graph.getPredecessors(trafficDemand.getSource())) {
-                            if (!vertex.equals(trafficDemand.getSource()) ||
-                                    trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                                SourceIncoming
-                                        .get(trafficDemand)
-                                        .addTerm(1.0, Flows
-                                                .get(trafficDemand)
-                                                .get(stateCopyCombination)
-                                                .get(graph.getEdge(vertex, trafficDemand.getSource())));
-                            }
-                        }
+
+
+                    for (Vertex vertex : graph.getPredecessors(trafficDemand.getSource())) {
+                        SourceIncoming
+                            .get(trafficDemand)
+                            .addTerm(1.0, Flows
+                                    .get(trafficDemand)
+                                    .get(stateCopyCombination)
+                                    .get(graph.getEdge(vertex, trafficDemand.getSource())));
                     }
+
                 }
 
-                if (trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                    cplex.addEq(SourceOutgoing.get(trafficDemand),1);
-                }
-                else{
-                    cplex.addEq(SourceOutgoing.get(trafficDemand),
-                            cplex.sum(
-                                    SourceIncoming.get(trafficDemand),
-                                    cplex.constant(1)));
-                }
+
+                cplex.addEq(
+                        SourceOutgoing.get(trafficDemand),
+                        cplex.sum(
+                                SourceIncoming.get(trafficDemand),
+                                cplex.constant(1)
+                        )
+                );
+
             }
 
             /**
@@ -320,44 +312,33 @@ public class ShardedSNAPDependency {
                 DestinationOutgoing.putIfAbsent(trafficDemand,cplex.linearNumExpr());
 
                 for (List<StateCopy> stateCopyCombination : combinations.get(trafficDemand)) {
-                    if (!trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                        for (Vertex vertex : graph.getSuccessors(trafficDemand.getDestination())) {
-                            if (!vertex.equals(trafficDemand.getDestination()) ||
-                                    trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                                DestinationOutgoing
+                    for (Vertex vertex : graph.getSuccessors(trafficDemand.getDestination())) {
+                        DestinationOutgoing
+                                .get(trafficDemand)
+                                .addTerm(1.0, Flows
                                         .get(trafficDemand)
-                                        .addTerm(1.0, Flows
-                                                .get(trafficDemand)
-                                                .get(stateCopyCombination)
-                                                .get(graph.getEdge(trafficDemand.getDestination(), vertex)));
-                            }
-                        }
+                                        .get(stateCopyCombination)
+                                        .get(graph.getEdge(trafficDemand.getDestination(), vertex)));
+
                     }
 
                     for (Vertex vertex : graph.getPredecessors(trafficDemand.getDestination())) {
-                        if (!vertex.equals(trafficDemand.getDestination()) ||
-                                trafficDemand.getSource().equals(trafficDemand.getDestination())) {
+                        DestinationIncoming
+                                .get(trafficDemand)
+                                .addTerm(1.0, Flows
+                                        .get(trafficDemand)
+                                        .get(stateCopyCombination)
+                                        .get(graph.getEdge(vertex, trafficDemand.getDestination())));
 
-                            DestinationIncoming
-                                    .get(trafficDemand)
-                                    .addTerm(1.0, Flows
-                                            .get(trafficDemand)
-                                            .get(stateCopyCombination)
-                                            .get(graph.getEdge(vertex, trafficDemand.getDestination())));
-                        }
                     }
-
                 }
 
-                if (trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                    cplex.addEq(DestinationIncoming.get(trafficDemand),1);
-                }
-                else{
-                    cplex.addEq(DestinationIncoming.get(trafficDemand),
-                            cplex.sum(
-                                    DestinationOutgoing.get(trafficDemand),
-                                    cplex.constant(1)));
-                }
+
+                cplex.addEq(DestinationIncoming.get(trafficDemand),
+                        cplex.sum(
+                                DestinationOutgoing.get(trafficDemand),
+                                cplex.constant(1)));
+
             }
 
             /**
@@ -370,13 +351,12 @@ public class ShardedSNAPDependency {
              */
 
             for (Edge edge: graph.getallEdges()){
-                if (edge.getSource().equals(edge.getDestination())){
-                    continue;
-                }
+
                 IloLinearNumExpr edgeTraffic = cplex.linearNumExpr();
                 for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
                     for (List<StateCopy> stateCopyCombination : combinations.get(trafficDemand)) {
-                        edgeTraffic.addTerm(trafficDemand.getDemand(),Flows
+                        edgeTraffic.addTerm(trafficDemand.getDemand(),
+                                Flows
                                 .get(trafficDemand)
                                 .get(stateCopyCombination)
                                 .get(edge));
@@ -506,20 +486,7 @@ public class ShardedSNAPDependency {
                                 */
 
                     }
-                    if (!trafficDemand.getSource().equals(trafficDemand.getDestination())) {
-                        for (Vertex vertex : graph.getPredecessors(trafficDemand.getSource())) {
-                            temp.addTerm(-1.0, Flows
-                                            .get(trafficDemand)
-                                            .get(stateCopyCombination)
-                                            .get(graph.getEdge(vertex, trafficDemand.getSource())));
-                                    /*
-                            X.get(trafficDemand).get(stateCopyCombination).addTerm(-1.0, Flows
-                                    .get(trafficDemand)
-                                    .get(stateCopyCombination)
-                                    .get(graph.getEdge(vertex, trafficDemand.getSource())));
-                                    */
-                        }
-                    }
+
                     cplex.addEq(temp, X.get(trafficDemand).get(stateCopyCombination));
                 }
             }
@@ -594,7 +561,7 @@ public class ShardedSNAPDependency {
              *
              *
              */
-
+            /*
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies: Flows.get(trafficDemand).keySet()) {
                     for(StateCopy stateCopy : stateCopies) {
@@ -625,6 +592,7 @@ public class ShardedSNAPDependency {
                     }
                 }
             }
+            */
 
 
 
@@ -819,18 +787,6 @@ public class ShardedSNAPDependency {
                     }
                 }
             }
-
-            for(TrafficDemand trafficDemand : Flows.keySet()){
-                for(List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()){
-                    for(Edge edge : Flows.get(trafficDemand).get(stateCopies).keySet()){
-                        if(edge.getSource().equals(edge.getDestination())
-                                && (!trafficDemand.getSource().equals(edge.getDestination()))){
-                            cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 0.0);
-                        }
-                    }
-                }
-            }
-
 
 
             if (fixConstraints)
