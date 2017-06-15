@@ -494,6 +494,18 @@ public class SNAPDependency {
                 }
             }
 
+            /**
+             * If flow u!=v, then edge u -> u should not be used
+             */
+
+            for(TrafficDemand trafficDemand : Flows.keySet()){
+                for (Edge edge : Flows.get(trafficDemand).keySet()) {
+                    if(edge.getSource().equals(edge.getDestination()) &&
+                            !(trafficDemand.getSource().equals(edge.getDestination())))
+                        cplex.addEq(Flows.get(trafficDemand).get(edge),0.0);
+                }
+            }
+
             if (fixConstraints)
                 FixVariables();
 
@@ -543,6 +555,7 @@ public class SNAPDependency {
     private void FixVariables() {
 
         try {
+            /*
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 if (trafficDemand.getSource().getLabel() == 0 && trafficDemand.getDestination().getLabel() == 5) {
                     for (Edge edge : Flows.get(trafficDemand).keySet()) {
@@ -561,12 +574,13 @@ public class SNAPDependency {
                     }
                 }
             }
+            */
 
             for(Vertex n : graph.getVertices()) {
                 for (StateVariable state : states) {
-                    if (state.getLabel() == "s" && n.equals(graph.getVertex(3)))
+                    if (state.getLabel().equals("A") && n.equals(graph.getVertex(5)))
                         cplex.addEq(Placement.get(n).get(state), 1.0);
-                    else if (state.getLabel() == "t" && n.equals(graph.getVertex(4)))
+                    else if (state.getLabel().equals("B") && n.equals(graph.getVertex(3)))
                         cplex.addEq(Placement.get(n).get(state), 1.0);
                     else
                         cplex.addEq(Placement.get(n).get(state), 0.0);

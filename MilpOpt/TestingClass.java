@@ -18,7 +18,7 @@ public class TestingClass {
 
         int capacity = Integer.MAX_VALUE;
 
-        int size = 2;
+        int size = 3;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
                 ManhattanGraphGen.mType.UNWRAPPED, false, true);
@@ -27,16 +27,18 @@ public class TestingClass {
 
         TrafficStore trafficStore = new TrafficStore();
 
-        TrafficDemand trafficDemand1 = new TrafficDemand(graph.getVertex(0),graph.getVertex(3),1);
-        TrafficDemand trafficDemand2 = new TrafficDemand(graph.getVertex(1),graph.getVertex(2),1);
-        TrafficDemand trafficDemand3 = new TrafficDemand(graph.getVertex(2),graph.getVertex(0),1);
-        TrafficDemand trafficDemand4 = new TrafficDemand(graph.getVertex(3),graph.getVertex(0),1);
+        TrafficDemand trafficDemand1 = new TrafficDemand(graph.getVertex(0),graph.getVertex(8),1);
+        //TrafficDemand trafficDemand2 = new TrafficDemand(graph.getVertex(1),graph.getVertex(2),1);
+        //TrafficDemand trafficDemand3 = new TrafficDemand(graph.getVertex(2),graph.getVertex(0),1);
+        //TrafficDemand trafficDemand4 = new TrafficDemand(graph.getVertex(3),graph.getVertex(0),1);
 
 
         trafficStore.addTrafficDemand(trafficDemand1);
+        /*
         trafficStore.addTrafficDemand(trafficDemand2);
         trafficStore.addTrafficDemand(trafficDemand3);
         trafficStore.addTrafficDemand(trafficDemand4);
+        */
 
         StateVariable A = new StateVariable("A");
         StateVariable B = new StateVariable("B");
@@ -50,6 +52,10 @@ public class TestingClass {
 
         Xf.put(trafficDemand1, new LinkedList<>());
         Xf.get(trafficDemand1).add(A);
+        Xf.get(trafficDemand1).add(B);
+
+
+        /*
 
         Xf.put(trafficDemand2, new LinkedList<>());
         Xf.get(trafficDemand2).add(B);
@@ -61,10 +67,10 @@ public class TestingClass {
         Xf.put(trafficDemand4, new LinkedList<>());
         Xf.get(trafficDemand4).add(A);
         Xf.get(trafficDemand4).add(B);
+        */
 
-
-        SNAPDependency snapDependency = new SNAPDependency(graph, trafficStore, true,
-                false, states, Xf);
+        SNAPDependency snapDependency = new SNAPDependency(graph, trafficStore, false,
+                true, states, Xf);
 
         snapDependency.optimize();
         snapDependency.printSolution();
