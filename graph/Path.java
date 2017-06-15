@@ -1,5 +1,6 @@
 package statefulsharding.graph;
 
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 
 public class Path {
@@ -48,6 +49,18 @@ public class Path {
 
     public Vertex getDestination(){
         return edges.getLast().getDestination();
+    }
+
+    public LinkedHashSet<Vertex> getVertices(){
+
+        LinkedHashSet<Vertex> vertices = new LinkedHashSet<>();
+
+        for(Edge edge : edges){
+            vertices.add(edge.getSource());
+            vertices.add(edge.getDestination());
+        }
+
+        return vertices;
     }
 
     public static Path merge(Path path1, Path path2){

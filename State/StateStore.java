@@ -10,19 +10,48 @@ import java.util.Set;
  */
 public class StateStore {
 
-    Set<StateVariable> stateVariables;
-    HashMap<StateVariable, LinkedList<StateCopy>> stateCopies;
+    private Set<StateVariable> stateVariables;
+    private HashMap<StateVariable, LinkedList<StateCopy>> stateCopies;
+    private Set<String> stateVariableString;
 
     public StateStore() {
         stateVariables = new HashSet<>();
         stateCopies = new HashMap<>();
+        stateVariableString = new HashSet<>();
     }
 
     public void addStateVariable(StateVariable stateVariable) {
-        stateVariables.add(stateVariable);
-        stateCopies.putIfAbsent(stateVariable, new LinkedList<>());
-        for(int i=1 ; i<=stateVariable.getCopies() ; i++){
-            stateCopies.get(stateVariable).add(new StateCopy(stateVariable, i));
+        if(!stateVariables.contains(stateVariable)) {
+            stateVariables.add(stateVariable);
+            stateCopies.putIfAbsent(stateVariable, new LinkedList<>());
+            for (int i = 1; i <= stateVariable.getCopies(); i++) {
+                stateCopies.get(stateVariable).add(new StateCopy(stateVariable, i));
+            }
+            stateVariableString.add(stateVariable.getLabel());
+        }
+    }
+
+    public void addStateVariable(String string) {
+        if(!checkStateVariable(string)) {
+            StateVariable stateVariable = new StateVariable(string);
+            stateVariables.add(stateVariable);
+            stateCopies.putIfAbsent(stateVariable, new LinkedList<>());
+            for (int i = 1; i <= stateVariable.getCopies(); i++) {
+                stateCopies.get(stateVariable).add(new StateCopy(stateVariable, i));
+            }
+            stateVariableString.add(stateVariable.getLabel());
+        }
+    }
+
+    public void addStateVariable(String string, int numCopies) {
+        if(!checkStateVariable(string)) {
+            StateVariable stateVariable = new StateVariable(string, numCopies);
+            stateVariables.add(stateVariable);
+            stateCopies.putIfAbsent(stateVariable, new LinkedList<>());
+            for (int i = 1; i <= stateVariable.getCopies(); i++) {
+                stateCopies.get(stateVariable).add(new StateCopy(stateVariable, i));
+            }
+            stateVariableString.add(stateVariable.getLabel());
         }
     }
 
@@ -38,7 +67,7 @@ public class StateStore {
 
     public StateVariable getStateVariable(String string) {
         for (StateVariable stateVariable : stateVariables) {
-            if(stateVariable.getLabel() == string){
+            if(stateVariable.getLabel().equals(string)){
                 return stateVariable;
             }
         }
@@ -79,9 +108,8 @@ public class StateStore {
         return stateCopy;
     }
 
-
-
-
-
+    public boolean checkStateVariable(String string){
+        return stateVariableString.contains(string);
+    }
 
 }

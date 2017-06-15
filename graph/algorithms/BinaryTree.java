@@ -1,10 +1,6 @@
 package statefulsharding.graph.algorithms;
 
-import statefulsharding.State.StateVariable;
 import statefulsharding.graph.ListGraph;
-
-import javax.swing.plaf.nimbus.State;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
@@ -25,7 +21,6 @@ public class BinaryTree {
             this.addNode(i);
         }
         graph = new ListGraph();
-
     }
 
     private void addNode(Integer integer){
@@ -104,12 +99,5 @@ public class BinaryTree {
 
         return graph;
     }
-
-
-
-
-
-
-
 
 }
