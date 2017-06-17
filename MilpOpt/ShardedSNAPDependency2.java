@@ -180,8 +180,8 @@ public class ShardedSNAPDependency2 {
                 X.put(trafficDemand, new HashMap<>());
                 for (List<StateCopy> stateCopyCombination : combinations.get(trafficDemand)) {
                     X.get(trafficDemand).put(stateCopyCombination,
-                            cplex.boolVar("X_u:_" + trafficDemand.getSource().getLabel() +
-                                    "_v:" + trafficDemand.getSource().getLabel() + "_" +
+                            cplex.boolVar("X_u_" + trafficDemand.getSource().getLabel() +
+                                    "_v_" + trafficDemand.getSource().getLabel() + "_" +
                                     StateCopyCombinationToString(stateCopyCombination)));
                 }
             }
@@ -337,7 +337,7 @@ public class ShardedSNAPDependency2 {
                 cplex.addEq(DestinationIncoming.get(trafficDemand),
                         cplex.sum(
                                 DestinationOutgoing.get(trafficDemand),
-                                cplex.constant(1)));
+                                cplex.constant(1.0)));
 
             }
 
@@ -349,6 +349,8 @@ public class ShardedSNAPDependency2 {
              * \forall u \ne v
              *
              */
+
+
 
             for (Edge edge: graph.getallEdges()){
 
@@ -365,6 +367,7 @@ public class ShardedSNAPDependency2 {
                 }
                 cplex.addLe(edgeTraffic,edge.getCapacity());
             }
+
 
             /**
              *
@@ -426,6 +429,8 @@ public class ShardedSNAPDependency2 {
              *
              */
 
+
+
             IloLinearNumExpr temp1;
             for(StateVariable stateVariable : stateStore.getStateVariables()) {
                 for (Vertex vertex : graph.getVertices()) {
@@ -437,6 +442,7 @@ public class ShardedSNAPDependency2 {
                 }
             }
 
+
             /**
              *
              * Each copy is at only 1 switch
@@ -444,6 +450,8 @@ public class ShardedSNAPDependency2 {
              * \forall c
              *
              */
+
+
 
             IloLinearNumExpr temp2;
             for(StateVariable stateVariable : stateStore.getStateVariables()) {
@@ -455,6 +463,7 @@ public class ShardedSNAPDependency2 {
                     cplex.addEq(temp2, 1.0);
                 }
             }
+
 
             /**
              *
@@ -470,14 +479,18 @@ public class ShardedSNAPDependency2 {
              *
              */
 
+
+
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopyCombination : Flows.get(trafficDemand).keySet()) {
                     IloLinearNumExpr temp = cplex.linearNumExpr();
                     for (Vertex vertex : graph.getSuccessors(trafficDemand.getSource())) {
+
                         temp.addTerm(1.0, Flows
                                 .get(trafficDemand)
                                 .get(stateCopyCombination)
                                 .get(graph.getEdge(trafficDemand.getSource(), vertex)));
+
                         /*
                         X.get(trafficDemand).get(stateCopyCombination).addTerm(1.0, Flows
                                 .get(trafficDemand)
@@ -502,6 +515,8 @@ public class ShardedSNAPDependency2 {
              *
              */
 
+
+
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
                 for(Vertex n : graph.getVertices()) {
                     if (!n.equals(trafficDemand.getSource()) && !n.equals(trafficDemand.getDestination())) {
@@ -521,6 +536,8 @@ public class ShardedSNAPDependency2 {
                 }
             }
 
+
+
             /**
              *
              * Upper limit of P_{cuvij}
@@ -533,6 +550,8 @@ public class ShardedSNAPDependency2 {
              *
              */
 
+
+
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()){
                     for(StateCopy stateCopy : stateCopies) {
@@ -540,9 +559,13 @@ public class ShardedSNAPDependency2 {
                             cplex.addGe(Flows.get(trafficDemand).get(stateCopies).get(edge),
                                     PTracker.get(trafficDemand).get(stateCopies).get(stateCopy).get(edge));
                         }
+
+
                     }
                 }
             }
+
+
 
             /**
              *
@@ -561,7 +584,7 @@ public class ShardedSNAPDependency2 {
              *
              *
              */
-            /*
+
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies: Flows.get(trafficDemand).keySet()) {
                     for(StateCopy stateCopy : stateCopies) {
@@ -592,7 +615,7 @@ public class ShardedSNAPDependency2 {
                     }
                 }
             }
-            */
+
 
 
 
@@ -671,6 +694,8 @@ public class ShardedSNAPDependency2 {
                              *
                              */
 
+
+
                             cplex.addGe(
                                     Y.get(trafficDemand).get(stateCopies).get(stateCopy).get(n),
                                     cplex.sum(Placement.get(n).get(stateCopy),
@@ -689,6 +714,8 @@ public class ShardedSNAPDependency2 {
 
 
 
+
+
                             if (!n.equals(trafficDemand.getSource()) && !n.equals(trafficDemand.getDestination())) {
 
                                 /**
@@ -701,6 +728,8 @@ public class ShardedSNAPDependency2 {
                                  * \forall c
                                  *
                                  */
+
+
 
                                 cplex.addEq(
                                         cplex.sum(
@@ -720,6 +749,7 @@ public class ShardedSNAPDependency2 {
                                                 .get(n)
                                 );
 
+
                             }
 
                             if (n.equals(trafficDemand.getDestination())) {
@@ -733,6 +763,7 @@ public class ShardedSNAPDependency2 {
                                  * \forall c
                                  *
                                  */
+
 
 
                                 cplex.addEq(
@@ -754,6 +785,8 @@ public class ShardedSNAPDependency2 {
                 }
             }
 
+
+
             /**
              *
              * Flows must pass states as defined in the state sequence
@@ -769,6 +802,8 @@ public class ShardedSNAPDependency2 {
              */
 
 
+
+
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies : combinations.get(trafficDemand)) {
                     for(int i=0 ; i<=stateCopies.size()-2 ; i++){
@@ -781,17 +816,25 @@ public class ShardedSNAPDependency2 {
                                                     .get(stateCopies.get(i))
                                                     .get(vertex)
                                     ),
-                                    Placement.get(vertex).get(stateCopies.get(i+1))
+                                    cplex.sum(
+                                        Placement.get(vertex).get(stateCopies.get(i+1)),
+                                        X.get(trafficDemand).get(stateCopies),
+                                        cplex.constant(-1.0)
+                                    )
                             );
                         }
                     }
                 }
             }
 
+
+
             /**
              * Flows at self edges = 0
              *  if src != dst
              */
+
+
 
             for(TrafficDemand trafficDemand : Flows.keySet()){
                 for(List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()){
@@ -804,10 +847,14 @@ public class ShardedSNAPDependency2 {
                 }
             }
 
+
+
             /**
              * PAuvij>=PBuvij
 
              */
+
+
 
 
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
@@ -825,6 +872,8 @@ public class ShardedSNAPDependency2 {
                     }
                 }
             }
+
+
 
 
 
@@ -863,8 +912,7 @@ public class ShardedSNAPDependency2 {
 
     public boolean optimize(){
         try{
-            boolean result = cplex.solve();
-            return result;
+            return cplex.solve();
         }
         catch  (IloException e)  {
             System.out.println("Exception " + e + " caught while optimizing the model");
@@ -1063,21 +1111,25 @@ public class ShardedSNAPDependency2 {
             for (Vertex vertex : graph.getVertices()) {
                 for (StateVariable stateVariable : stateStore.getStateVariables()) {
                     for (StateCopy stateCopy : stateStore.getStateCopies(stateVariable)) {
-                        if(stateCopy.getState().getLabel()=="A" &&
+
+                        if(stateCopy.getState().getLabel().equals("A") &&
                                 stateCopy.getCopyNumber()==1 &&
                                 vertex.getLabel()==1){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-                        else if(stateCopy.getState().getLabel()=="A" &&
+
+                        else if(stateCopy.getState().getLabel().equals("A") &&
                                 stateCopy.getCopyNumber()==2 &&
                                 vertex.getLabel()==7){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-                        else if(stateCopy.getState().getLabel()=="B" &&
+
+                        else if(stateCopy.getState().getLabel().equals("B") &&
                                 stateCopy.getCopyNumber()==1 &&
                                 vertex.getLabel()==2){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
+
                         else{
                             cplex.addEq(Placement.get(vertex).get(stateCopy),0);
                         }
@@ -1089,13 +1141,13 @@ public class ShardedSNAPDependency2 {
 
             LinkedList<String> StringAB = new LinkedList<>(); StringAB.add("A"); StringAB.add("B");
             LinkedList<Integer> int11 = new LinkedList<>(); int11.add(1); int11.add(1);
-            LinkedList<Integer> int21 = new LinkedList<>(); int21.add(2); int21.add(1);
+
             //LinkedList<Integer> int12 = new LinkedList<>(); int12.add(1); int11.add(2);
             //LinkedList<Integer> int21 = new LinkedList<>(); int21.add(2); int11.add(1);
             //LinkedList<Integer> int22 = new LinkedList<>(); int22.add(2); int11.add(2);
 
             List<StateCopy> A1B1 = getListStateCopy(StringAB,int11);
-            List<StateCopy> A2B1 = getListStateCopy(StringAB,int21);
+
 
 
             /*
@@ -1116,29 +1168,35 @@ public class ShardedSNAPDependency2 {
             }
             */
 
-            /*
+
 
 
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()) {
                     for (Edge edge : Flows.get(trafficDemand).get(stateCopies).keySet()) {
+
                         if (edge.getSource().getLabel() == 0 && edge.getDestination().getLabel() == 1
                                 && stateCopies.equals(A1B1))
                             cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
+
                         else if(edge.getSource().getLabel() == 1 && edge.getDestination().getLabel() == 2
                                 && stateCopies.equals(A1B1))
                             cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
+
                         else if (edge.getSource().getLabel() == 2 && edge.getDestination().getLabel() == 5
                                 && stateCopies.equals(A1B1))
                             cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
-                        else if (edge.getSource().getLabel() == 5 && edge.getDestination().getLabel() == 8)
+
+                        else if (edge.getSource().getLabel() == 5 && edge.getDestination().getLabel() == 8
+                                && stateCopies.equals(A1B1))
                             cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
+
                         else
                             cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 0.0);
                     }
                 }
             }
-            */
+
 
 
 

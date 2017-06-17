@@ -25,14 +25,14 @@ public class TestingClass {
         int size = 3;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
-                ManhattanGraphGen.mType.UNWRAPPED, false, false);
+                ManhattanGraphGen.mType.UNWRAPPED, false, true);
 
         ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
         TrafficStore trafficStore = new TrafficStore();
 
         TrafficDemand trafficDemand1 = new TrafficDemand(
-                graph.getVertex(0),graph.getVertex(8),1
+                graph.getVertex(0),graph.getVertex(0),1
         );
 
         trafficStore.addTrafficDemand(trafficDemand1);
@@ -51,10 +51,10 @@ public class TestingClass {
         dependencies.put(trafficDemand1, new LinkedList<>());
 
         dependencies.get(trafficDemand1).add(A);
-        dependencies.get(trafficDemand1).add(B);
+        //dependencies.get(trafficDemand1).add(B);
 
-        boolean verbose = false;
-        boolean fixConstraints = true;
+        boolean verbose = true;
+        boolean fixConstraints = false;
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
@@ -63,9 +63,11 @@ public class TestingClass {
                                                                                 dependencies,
                                                                                 optimizationOptions,
                                                                                 stateStore);
+        boolean result = shardedSNAPDependency.optimize();
+        System.out.println("Result: " + result);
 
-        System.out.println("Result: " + shardedSNAPDependency.optimize());
-        shardedSNAPDependency.printSolution();
+        if(result)
+            shardedSNAPDependency.printSolution();
 
     }
 }
