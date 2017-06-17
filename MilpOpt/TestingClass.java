@@ -1,5 +1,6 @@
 package statefulsharding.MilpOpt;
 
+import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficStore;
@@ -21,7 +22,7 @@ public class TestingClass {
         int size = 3;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
-                ManhattanGraphGen.mType.UNWRAPPED, false, true);
+                ManhattanGraphGen.mType.UNWRAPPED, false, false);
 
         ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
@@ -48,6 +49,10 @@ public class TestingClass {
         states.add(A);
         states.add(B);
 
+        StateStore stateStore = new StateStore();
+        stateStore.addStateVariable(A);
+        stateStore.addStateVariable(B);
+
         HashMap<TrafficDemand, LinkedList<StateVariable>> Xf = new HashMap<>();
 
         Xf.put(trafficDemand1, new LinkedList<>());
@@ -70,7 +75,7 @@ public class TestingClass {
         */
 
         SNAPDependency snapDependency = new SNAPDependency(graph, trafficStore, false,
-                true, states, Xf);
+                true, states, Xf, stateStore);
 
         snapDependency.optimize();
         snapDependency.printSolution();

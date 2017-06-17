@@ -22,7 +22,7 @@ public class TestingClass {
 
         int capacity = Integer.MAX_VALUE;
 
-        int size = 4;
+        int size = 3;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
                 ManhattanGraphGen.mType.UNWRAPPED, false, false);
@@ -32,7 +32,7 @@ public class TestingClass {
         TrafficStore trafficStore = new TrafficStore();
 
         TrafficDemand trafficDemand1 = new TrafficDemand(
-                graph.getVertex(0),graph.getVertex(11),1
+                graph.getVertex(0),graph.getVertex(8),1
         );
 
         trafficStore.addTrafficDemand(trafficDemand1);
@@ -58,14 +58,14 @@ public class TestingClass {
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
-        ShardedSNAPDependency2 shardedSNAPDependency2 = new ShardedSNAPDependency2(graph,
+        ShardedSNAPDependency2 shardedSNAPDependency = new ShardedSNAPDependency2(graph,
                                                                                 trafficStore,
                                                                                 dependencies,
                                                                                 optimizationOptions,
                                                                                 stateStore);
 
-        System.out.println("Result: " + shardedSNAPDependency2.optimize());
-        shardedSNAPDependency2.printSolution();
+        System.out.println("Result: " + shardedSNAPDependency.optimize());
+        shardedSNAPDependency.printSolution();
 
     }
 }

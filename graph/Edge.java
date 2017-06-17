@@ -77,5 +77,9 @@ public class Edge {
         System.out.println(source.getLabel() + " -> " + destination.getLabel());
     }
 
+    public String getLabel(){
+        return source.getLabel() + "_" + destination.getLabel();
+    }
+
 
 }

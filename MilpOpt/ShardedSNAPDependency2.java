@@ -788,6 +788,46 @@ public class ShardedSNAPDependency2 {
                 }
             }
 
+            /**
+             * Flows at self edges = 0
+             *  if src != dst
+             */
+
+            for(TrafficDemand trafficDemand : Flows.keySet()){
+                for(List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()){
+                    for(Edge edge : Flows.get(trafficDemand).get(stateCopies).keySet()){
+                        if(edge.getSource().equals(edge.getDestination())
+                                && (!trafficDemand.getSource().equals(edge.getDestination()))){
+                            cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 0.0);
+                        }
+                    }
+                }
+            }
+
+            /**
+             * PAuvij>=PBuvij
+
+             */
+
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                for(List<StateCopy> stateCopies : PTracker.get(trafficDemand).keySet()){
+
+                    for(int i=0 ; i<stateCopies.size()-1 ; i++){
+
+                        for(Edge edge : graph.getallEdges()){
+
+                            cplex.addGe(
+                                    PTracker.get(trafficDemand).get(stateCopies).get(stateCopies.get(i)).get(edge),
+                                    PTracker.get(trafficDemand).get(stateCopies).get(stateCopies.get(i+1)).get(edge)
+                            );
+                        }
+                    }
+                }
+            }
+
+
+
 
             if (fixConstraints)
                 FixVariables();
@@ -1025,17 +1065,17 @@ public class ShardedSNAPDependency2 {
                     for (StateCopy stateCopy : stateStore.getStateCopies(stateVariable)) {
                         if(stateCopy.getState().getLabel()=="A" &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==3){
+                                vertex.getLabel()==1){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
                         else if(stateCopy.getState().getLabel()=="A" &&
                                 stateCopy.getCopyNumber()==2 &&
-                                vertex.getLabel()==12){
+                                vertex.getLabel()==7){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
                         else if(stateCopy.getState().getLabel()=="B" &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==1){
+                                vertex.getLabel()==2){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
                         else{
@@ -1055,12 +1095,13 @@ public class ShardedSNAPDependency2 {
             //LinkedList<Integer> int22 = new LinkedList<>(); int22.add(2); int11.add(2);
 
             List<StateCopy> A1B1 = getListStateCopy(StringAB,int11);
-            //List<StateCopy> A2B1 = getListStateCopy(StringAB,int21);
+            List<StateCopy> A2B1 = getListStateCopy(StringAB,int21);
+
 
             /*
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 cplex.addEq(Flows.get(trafficDemand).get(A2B1).get(
-                       graph.getEdge(graph.getVertex(0),graph.getVertex(1))
+                       graph.getEdge(graph.getVertex(1),graph.getVertex(2))
                 ),0.0);
                 cplex.addEq(Flows.get(trafficDemand).get(A2B1).get(
                         graph.getEdge(graph.getVertex(1),graph.getVertex(0))
@@ -1071,40 +1112,35 @@ public class ShardedSNAPDependency2 {
                 cplex.addEq(Flows.get(trafficDemand).get(A2B1).get(
                         graph.getEdge(graph.getVertex(5),graph.getVertex(1))
                 ),0.0);
+
             }
             */
 
-
             /*
-
 
 
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies : Flows.get(trafficDemand).keySet()) {
                     for (Edge edge : Flows.get(trafficDemand).get(stateCopies).keySet()) {
-                        if (stateCopies.equals(A1B1)){
-                            if (edge.getSource().getLabel() == 0 && edge.getDestination().getLabel() == 1)
-                                cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
-                            else if(edge.getSource().getLabel() == 1 && edge.getDestination().getLabel() == 2)
-                                cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
-                            else if (edge.getSource().getLabel() == 2 && edge.getDestination().getLabel() == 3)
-                                cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
-                            else if (edge.getSource().getLabel() == 3 && edge.getDestination().getLabel() == 7)
-                                cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
-                            else if (edge.getSource().getLabel() == 7 && edge.getDestination().getLabel() == 11)
-                                cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
-                            else {
-                                cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 0.0);
-                            }
-                        }
+                        if (edge.getSource().getLabel() == 0 && edge.getDestination().getLabel() == 1
+                                && stateCopies.equals(A1B1))
+                            cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
+                        else if(edge.getSource().getLabel() == 1 && edge.getDestination().getLabel() == 2
+                                && stateCopies.equals(A1B1))
+                            cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
+                        else if (edge.getSource().getLabel() == 2 && edge.getDestination().getLabel() == 5
+                                && stateCopies.equals(A1B1))
+                            cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
+                        else if (edge.getSource().getLabel() == 5 && edge.getDestination().getLabel() == 8)
+                            cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 1.0);
                         else
                             cplex.addEq(Flows.get(trafficDemand).get(stateCopies).get(edge), 0.0);
                     }
                 }
-
             }
-
             */
+
+
 
 
             /*

@@ -175,8 +175,8 @@ public class RandomGraphDemo {
 
 
 
-        boolean verbose = false;
-        boolean fixConstraints = true;
+        boolean verbose = true;
+        boolean fixConstraints = false;
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 

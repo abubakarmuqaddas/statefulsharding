@@ -4,6 +4,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
+import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficStore;
@@ -23,6 +24,7 @@ public class SNAPDependency {
     private ListGraph graph;
     private TrafficStore trafficStore;
     private IloCplex cplex;
+    private StateStore stateStore;
     private HashMap<TrafficDemand, HashMap<Edge, IloNumVar>> Flows;
     private HashMap<TrafficDemand, HashMap<StateVariable, HashMap<Edge, IloNumVar>>> PTracker;
     private HashMap<Vertex, HashMap<StateVariable, IloNumVar>> Placement;
@@ -36,9 +38,11 @@ public class SNAPDependency {
                           boolean outputRequired,
                           boolean fixConstraints,
                           Set<StateVariable> states,
-                          HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies){
+                          HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
+                          StateStore stateStore){
         this.graph = graph;
         this.trafficStore = trafficStore;
+        this.stateStore = stateStore;
         this.states = states;
         this.dependencies = dependencies;
         Flows = new HashMap<>();
@@ -73,8 +77,10 @@ public class SNAPDependency {
                     new HashMap<>();
             HashMap<TrafficDemand, HashMap<Vertex, IloLinearNumExpr>> OutgoingFlows =
                     new HashMap<>();
-            HashMap<TrafficDemand, HashMap<StateVariable, HashMap<Vertex, IloLinearNumExpr>>> TrackIncoming = new HashMap<>();
-            HashMap<TrafficDemand, HashMap<StateVariable, HashMap<Vertex, IloLinearNumExpr>>> TrackOutgoing = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<StateVariable, HashMap<Vertex, IloLinearNumExpr>>>
+                    TrackIncoming = new HashMap<>();
+            HashMap<TrafficDemand, HashMap<StateVariable, HashMap<Vertex, IloLinearNumExpr>>>
+                    TrackOutgoing = new HashMap<>();
 
             /**
              * Defining Routing Variable
@@ -161,7 +167,9 @@ public class SNAPDependency {
                 if (trafficDemand.getSource().equals(trafficDemand.getDestination())){
                     cplex.addEq(Flows
                                     .get(trafficDemand)
-                                    .get(graph.getEdge(trafficDemand.getSource(),trafficDemand.getDestination())),
+                                    .get(graph.getEdge(
+                                            trafficDemand.getSource(),trafficDemand.getDestination()
+                                    )),
                             1);
                 }
                 else {
@@ -308,7 +316,7 @@ public class SNAPDependency {
 
             /**
              *
-             * Each copy is at only 1 switch
+             * Each state variable is at only 1 switch
              * \sum_n P_{state_n} = 1
              * \forall c
              *
@@ -363,7 +371,8 @@ public class SNAPDependency {
                                     .get(trafficDemand)
                                     .get(state)
                                     .get(n)
-                                    .addTerm(1.0, PTracker.get(trafficDemand).get(state).get(graph.getEdge(i,n)));
+                                    .addTerm(1.0,
+                                            PTracker.get(trafficDemand).get(state).get(graph.getEdge(i,n)));
                         }
 
                         for (Vertex j : graph.getSuccessors(n)){
@@ -371,7 +380,8 @@ public class SNAPDependency {
                                     .get(trafficDemand)
                                     .get(state)
                                     .get(n)
-                                    .addTerm(1.0, PTracker.get(trafficDemand).get(state).get(graph.getEdge(n,j)));
+                                    .addTerm(1.0,
+                                            PTracker.get(trafficDemand).get(state).get(graph.getEdge(n,j)));
                         }
                     }
                 }
@@ -435,6 +445,7 @@ public class SNAPDependency {
                 }
             }
 
+
             /**
              *
              * Tracking at an intermediate node if flow has passed the state
@@ -484,7 +495,8 @@ public class SNAPDependency {
                 if(reqStates.size()>1) {
                     for (int i = 0; i < reqStates.size() - 1; i++) {
                         for (Vertex n : graph.getVertices()) {
-                            if (!n.equals(trafficDemand.getSource()) && !n.equals(trafficDemand.getDestination())) {
+                            if (!n.equals(trafficDemand.getSource()) &&
+                                    !n.equals(trafficDemand.getDestination())) {
                                 cplex.addGe(cplex.sum(Placement.get(n).get(reqStates.get(i)),
                                         TrackIncoming.get(trafficDemand).get(reqStates.get(i)).get(n)),
                                         Placement.get(n).get(reqStates.get(i + 1)));
@@ -506,10 +518,30 @@ public class SNAPDependency {
                 }
             }
 
+
+            /**
+             *
+             * P_{Auvij} \ge P_{Buvij}
+             *
+             *
+             */
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                LinkedList<StateVariable> reqStates = dependencies.get(trafficDemand);
+                if(reqStates.size()>1) {
+                    for (int i = 0; i < reqStates.size() - 1; i++) {
+                        for (Edge edge : Flows.get(trafficDemand).keySet()) {
+                            cplex.addGe(PTracker.get(trafficDemand).get(reqStates.get(i)).get(edge),
+                                    PTracker.get(trafficDemand).get(reqStates.get(i+1)).get(edge));
+                        }
+                    }
+                }
+            }
+
             if (fixConstraints)
                 FixVariables();
 
-            //cplex.exportModel("test_shortestpath.lp");
+            cplex.exportModel("test_snapDep.lp");
 
         }
         catch (IloException e){
@@ -557,15 +589,31 @@ public class SNAPDependency {
         try {
             /*
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
-                if (trafficDemand.getSource().getLabel() == 0 && trafficDemand.getDestination().getLabel() == 5) {
+                if (trafficDemand.getSource().getLabel() == 0
+                        && trafficDemand.getDestination().getLabel() == 8) {
                     for (Edge edge : Flows.get(trafficDemand).keySet()) {
-                        if (edge.getSource().getLabel() == 0 && edge.getDestination().getLabel() == 3) {
+                        if (edge.getSource().getLabel() == 0 && edge.getDestination().getLabel() == 1) {
+                            cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
+                        }
+                        else if (edge.getSource().getLabel() == 1 && edge.getDestination().getLabel() == 2) {
+                            cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
+                        }
+                        else if (edge.getSource().getLabel() == 2 && edge.getDestination().getLabel() == 5) {
+                            cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
+                        }
+                        else if (edge.getSource().getLabel() == 5 && edge.getDestination().getLabel() == 4) {
+                            cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
+                        }
+                        else if (edge.getSource().getLabel() == 4 && edge.getDestination().getLabel() == 3) {
                             cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
                         }
                         else if (edge.getSource().getLabel() == 3 && edge.getDestination().getLabel() == 4) {
                             cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
                         }
                         else if (edge.getSource().getLabel() == 4 && edge.getDestination().getLabel() == 5) {
+                            cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
+                        }
+                        else if (edge.getSource().getLabel() == 5 && edge.getDestination().getLabel() == 8) {
                             cplex.addEq(Flows.get(trafficDemand).get(edge), 1.0);
                         }
                         else {
@@ -576,16 +624,18 @@ public class SNAPDependency {
             }
             */
 
+
             for(Vertex n : graph.getVertices()) {
                 for (StateVariable state : states) {
-                    if (state.getLabel().equals("A") && n.equals(graph.getVertex(5)))
+                    if (state.getLabel().equals("A") && n.equals(graph.getVertex(0)))
                         cplex.addEq(Placement.get(n).get(state), 1.0);
-                    else if (state.getLabel().equals("B") && n.equals(graph.getVertex(3)))
+                    else if (state.getLabel().equals("B") && n.equals(graph.getVertex(0)))
                         cplex.addEq(Placement.get(n).get(state), 1.0);
                     else
                         cplex.addEq(Placement.get(n).get(state), 0.0);
                 }
             }
+
 
 
         }
@@ -626,6 +676,23 @@ public class SNAPDependency {
                     }
                 }
             }
+
+            System.out.println();
+
+            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                for (StateVariable state: dependencies.get(trafficDemand)){
+                    for (Edge edge : Flows.get(trafficDemand).keySet()) {
+
+                        if(cplex.getValue(PTracker.get(trafficDemand).get(state).get(edge))>0){
+                            System.out.println("Psuvij_" + state.getLabel() + "_" + edge.getLabel() + " = "
+                            + "1");
+                        }
+
+                    }
+                }
+            }
+
+
 
         }
 

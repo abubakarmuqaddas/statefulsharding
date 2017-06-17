@@ -111,7 +111,7 @@ public class StateStore {
         StateCopy stateCopy = null;
 
         for(StateVariable stateVariable : stateVariables){
-            if(stateVariable.getLabel() == stateString){
+            if(stateVariable.getLabel().equals(stateString)){
                 if(stateCopies.get(stateVariable)!=null) {
                     for (StateCopy copy : stateCopies.get(stateVariable))
                         if (copy.getCopyNumber() == copyNumber)
