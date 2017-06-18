@@ -2,6 +2,7 @@ package statefulsharding.randomgraphgen;
 
 import statefulsharding.MilpOpt.OptimizationOptions;
 import statefulsharding.MilpOpt.ShardedSNAPDependency;
+import statefulsharding.MilpOpt.ShardedSNAPDependency2;
 import statefulsharding.State.GenerateStates;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
@@ -38,11 +39,12 @@ public class RandomGraphDemo {
                 );
 
         StateStore stateStore = new StateStore();
-        /*
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 GenerateStates.BinaryTreeGenerator(dependencySize, stateStore);
-
-        */
+        stateStore.setStateCopies("a",2);
+        stateStore.setStateCopies("b",2);
+        stateStore.setStateCopies("c",1);
+        /*
 
         StateVariable a = new StateVariable("a", 2);
         StateVariable b = new StateVariable("b", 2);
@@ -127,14 +129,10 @@ public class RandomGraphDemo {
                 dependencies.put(trafficDemand, new LinkedList<>());
                 dependencies.get(trafficDemand).add(stateStore.getStateVariable("a"));
             }
-
-
-
-
-
         }
+        */
 
-        /*
+
         for (LinkedList<StateVariable> dependency : allDependencies) {
             for (StateVariable stateVariable : dependency) {
                 System.out.print(stateVariable.getLabel() + " ");
@@ -142,9 +140,7 @@ public class RandomGraphDemo {
             System.out.println();
         }
 
-        */
 
-        /*
 
         HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies = new HashMap<>();
 
@@ -155,10 +151,6 @@ public class RandomGraphDemo {
                             0, allDependencies.size()
                     )));
         }
-
-        */
-
-
 
         System.out.println();
         dependencies.forEach((trafficDemand, stateVariables) -> {
@@ -180,7 +172,7 @@ public class RandomGraphDemo {
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
-        ShardedSNAPDependency shardedSNAPDependency = new ShardedSNAPDependency(graph,
+        ShardedSNAPDependency2 shardedSNAPDependency = new ShardedSNAPDependency2(graph,
                                                                                 trafficStore,
                                                                                 dependencies,
                                                                                 optimizationOptions,
