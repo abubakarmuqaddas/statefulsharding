@@ -1137,21 +1137,31 @@ public class ShardedSNAPDependency2 {
                 for (StateVariable stateVariable : stateStore.getStateVariables()) {
                     for (StateCopy stateCopy : stateStore.getStateCopies(stateVariable)) {
 
-                        if(stateCopy.getState().getLabel().equals("A") &&
+                        if(stateCopy.getState().getLabel().equals("a") &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==0){
+                                vertex.getLabel()==5){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
 
-                        else if(stateCopy.getState().getLabel().equals("A") &&
+                        else if(stateCopy.getState().getLabel().equals("a") &&
                                 stateCopy.getCopyNumber()==2 &&
-                                vertex.getLabel()==6){
+                                vertex.getLabel()==10){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
 
-                        else if(stateCopy.getState().getLabel().equals("B") &&
+                        else if(stateCopy.getState().getLabel().equals("b") &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==6){
+                                vertex.getLabel()==5){
+                            cplex.addEq(Placement.get(vertex).get(stateCopy),1);
+                        }
+                        else if(stateCopy.getState().getLabel().equals("b") &&
+                                stateCopy.getCopyNumber()==2 &&
+                                vertex.getLabel()==8){
+                            cplex.addEq(Placement.get(vertex).get(stateCopy),1);
+                        }
+                        else if(stateCopy.getState().getLabel().equals("c") &&
+                                stateCopy.getCopyNumber()==1 &&
+                                vertex.getLabel()==5){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
 
