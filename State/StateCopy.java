@@ -1,6 +1,7 @@
 package statefulsharding.State;
 
 import statefulsharding.State.StateVariable;
+import statefulsharding.graph.Vertex;
 
 /**
  * Created by root on 6/11/17.
@@ -9,6 +10,7 @@ public class StateCopy {
 
     private StateVariable state;
     private int copyNumber;
+    private Vertex vertex;
 
     public StateCopy(StateVariable state, int copyNumber){
         this.state=state;
@@ -35,6 +37,15 @@ public class StateCopy {
         String stateCopyString = getLabel() + copyNumber;
         return stateCopyString;
     }
+
+    public void setVertex(Vertex vertex){
+        this.vertex = vertex;
+    }
+
+    public Vertex getVertex(){
+        return vertex;
+    }
+
 
     public boolean equals(Object other){
         boolean result=false;

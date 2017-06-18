@@ -50,6 +50,7 @@ public class StateStore {
     public void addStateVariable(String string, int numCopies) {
         if(!checkStateVariable(string)) {
             StateVariable stateVariable = new StateVariable(string, numCopies);
+            stateVariables.add(stateVariable);
             /*
             stateVariables.add(stateVariable);
             stateCopies.putIfAbsent(stateVariable, new LinkedList<>());

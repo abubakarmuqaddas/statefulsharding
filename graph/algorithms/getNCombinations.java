@@ -8,7 +8,6 @@ import java.util.LinkedList;
 public class getNCombinations {
 
     private LinkedList<Integer> v;
-    private int p;
     private LinkedList<Integer> data;
     private int N;
     private LinkedList<LinkedList<Integer>> result;
@@ -22,6 +21,7 @@ public class getNCombinations {
     }
 
     private void recursive(int n){
+        int p;
         if(n==N)
             result.add(new LinkedList<>(v));
         else{
@@ -42,6 +42,8 @@ public class getNCombinations {
     public LinkedList<LinkedList<Integer>> getResult(){
         return result;
     }
+
+
 
 
 }
