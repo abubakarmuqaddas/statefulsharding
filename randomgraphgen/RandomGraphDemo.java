@@ -22,7 +22,6 @@ public class RandomGraphDemo {
         int size = 4;
         int dependencySize = 3;
         int capacity = Integer.MAX_VALUE;
-        Random RandomNumberGen = new Random();
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
                 ManhattanGraphGen.mType.UNWRAPPED, false, true);
@@ -35,18 +34,16 @@ public class RandomGraphDemo {
                 "../Dropbox/PhD_Work/Stateful_SDN/" +
                         "snapsharding/analysis/" +
                         "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_4/" +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_4_run_2_traffic.txt"
+                        "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_4_run_4_traffic.txt"
                 );
 
         StateStore stateStore = new StateStore();
-
 
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 GenerateStates.BinaryTreeGenerator(dependencySize, stateStore);
         stateStore.setStateCopies("a",2);
         stateStore.setStateCopies("b",2);
         stateStore.setStateCopies("c",1);
-
 
         /*
 
@@ -147,15 +144,9 @@ public class RandomGraphDemo {
             System.out.println();
         }
 
-
-
-
-
-
         HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies = new HashMap<>();
 
         for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
-
             dependencies.put(trafficDemand,
                     allDependencies.get(ThreadLocalRandom.current().nextInt(
                             0, allDependencies.size()

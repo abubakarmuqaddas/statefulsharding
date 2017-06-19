@@ -17,6 +17,13 @@ public class StateCopy {
         this.copyNumber=copyNumber;
     }
 
+    public StateCopy(StateVariable state, int copyNumber, Vertex vertex){
+        this.state=state;
+        this.copyNumber=copyNumber;
+        this.vertex=vertex;
+    }
+
+
     public String getLabel() {
         return state.getLabel();
     }
@@ -53,6 +60,17 @@ public class StateCopy {
         if (other instanceof StateCopy){
             StateCopy that = (StateCopy) other;
             result = (this.getLabel().equals(that.getLabel()) && this.getCopyNumber()==that.getCopyNumber());
+        }
+        return result;
+    }
+
+    public boolean equalsDeep(Object other){
+        boolean result=false;
+
+        if (other instanceof StateCopy){
+            StateCopy that = (StateCopy) other;
+            result = (this.getLabel().equals(that.getLabel()) && this.getCopyNumber()==that.getCopyNumber()
+                        && this.getVertex().equals(that.getVertex()));
         }
         return result;
     }

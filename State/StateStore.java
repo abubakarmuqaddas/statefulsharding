@@ -68,6 +68,7 @@ public class StateStore {
         stateCopies.get(stateVariable).add(stateCopy);
     }
 
+
     public void setStateCopies(String string, int numCopies){
         StateVariable stateVariable = getStateVariable(string);
         stateVariable.setCopies(numCopies);
@@ -126,6 +127,10 @@ public class StateStore {
 
     public boolean checkStateVariable(String string){
         return stateVariableString.contains(string);
+    }
+
+    public int getNumStates(){
+        return stateVariables.size();
     }
 
 }
