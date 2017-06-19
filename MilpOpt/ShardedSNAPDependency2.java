@@ -1139,7 +1139,7 @@ public class ShardedSNAPDependency2 {
 
                         if(stateCopy.getState().getLabel().equals("a") &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==5){
+                                vertex.getLabel()==6){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
 
@@ -1151,12 +1151,12 @@ public class ShardedSNAPDependency2 {
 
                         else if(stateCopy.getState().getLabel().equals("b") &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==5){
+                                vertex.getLabel()==6){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
                         else if(stateCopy.getState().getLabel().equals("b") &&
                                 stateCopy.getCopyNumber()==2 &&
-                                vertex.getLabel()==8){
+                                vertex.getLabel()==10){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
                         else if(stateCopy.getState().getLabel().equals("c") &&

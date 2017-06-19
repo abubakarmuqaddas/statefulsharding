@@ -70,7 +70,7 @@ public class StateStore {
 
     public void setStateCopies(String string, int numCopies){
         StateVariable stateVariable = getStateVariable(string);
-        //stateVariable.setCopies(2);
+        stateVariable.setCopies(numCopies);
         stateCopies.putIfAbsent(stateVariable, new LinkedList<>());
         for (int i = 1; i <= numCopies; i++) {
             stateCopies.get(stateVariable).add(new StateCopy(stateVariable, i));
