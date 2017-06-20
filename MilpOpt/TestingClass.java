@@ -4,6 +4,7 @@ import statefulsharding.State.GenerateStates;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
 import statefulsharding.Traffic.TrafficDemand;
+import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
@@ -22,16 +23,7 @@ public class TestingClass {
 
     public static void main(String[] args){
 
-        int depSize = 2;
-        int depRun = 1;
-
-        String filename = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/StateDependencies/"
-                 + "StateDependencies_" + depSize + "_" + depRun + ".txt";
-
-        StateStore stateStore = new StateStore();
-
-        LinkedList<LinkedList<StateVariable>> allDependencies =
-                StateStore.readStateDependency(filename, stateStore);
+        
 
 
     }
