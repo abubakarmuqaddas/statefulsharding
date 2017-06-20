@@ -1,7 +1,6 @@
 package statefulsharding;
 
 import statefulsharding.MilpOpt.OptimizationOptions;
-import statefulsharding.MilpOpt.ShardedSNAPDependency;
 import statefulsharding.MilpOpt.ShardedSNAPDependency2;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;

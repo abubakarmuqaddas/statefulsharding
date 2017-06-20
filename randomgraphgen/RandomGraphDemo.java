@@ -1,7 +1,6 @@
 package statefulsharding.randomgraphgen;
 
 import statefulsharding.MilpOpt.OptimizationOptions;
-import statefulsharding.MilpOpt.ShardedSNAPDependency;
 import statefulsharding.MilpOpt.ShardedSNAPDependency2;
 import statefulsharding.State.GenerateStates;
 import statefulsharding.State.StateStore;
@@ -16,11 +15,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class RandomGraphDemo {
 
-
     public static void main(String[] args){
 
-        int size = 4;
-        int dependencySize = 3;
+        int size = 9;
+        int dependencySize = 1;
         int capacity = Integer.MAX_VALUE;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
@@ -33,8 +31,10 @@ public class RandomGraphDemo {
         TrafficGenerator.fromFile(graph, trafficStore,
                 "../Dropbox/PhD_Work/Stateful_SDN/" +
                         "snapsharding/analysis/" +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_4/" +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_4_run_4_traffic.txt"
+                        "MANHATTAN-UNWRAPPED_deterministicTfc-evaluateTrafficHeuristic-fixCopies_9/" +
+                        "MANHATTAN-UNWRAPPED_deterministicTfc-evaluateTrafficHeuristic-fixCopies_9_run_" +
+                        "1" +
+                        "_traffic.txt"
                 );
 
         StateStore stateStore = new StateStore();
@@ -42,8 +42,8 @@ public class RandomGraphDemo {
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 GenerateStates.BinaryTreeGenerator(dependencySize, stateStore);
         stateStore.setStateCopies("a",2);
-        stateStore.setStateCopies("b",2);
-        stateStore.setStateCopies("c",1);
+        //stateStore.setStateCopies("b",2);
+        //stateStore.setStateCopies("c",1);
 
         /*
 

@@ -1,5 +1,6 @@
 package statefulsharding.State;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -132,5 +133,79 @@ public class StateStore {
     public int getNumStates(){
         return stateVariables.size();
     }
+
+    public static void GenerateWriteStates(int maxDependencySize, int maxRun, String filename){
+
+        for(int dependencySize =1 ; dependencySize<=maxDependencySize ; dependencySize++) {
+
+            for (int run = 1; run <= maxRun; run++) {
+
+                StateStore stateStore = new StateStore();
+                LinkedList<LinkedList<StateVariable>> allDependencies =
+                        GenerateStates.BinaryTreeGenerator(dependencySize, stateStore);
+
+
+                filename = filename + dependencySize + "_" + run + ".txt";
+
+                try {
+
+                    FileWriter partfw = new FileWriter(filename, true);
+                    BufferedWriter partbw = new BufferedWriter(partfw);
+                    PrintWriter partout = new PrintWriter(partbw);
+
+                    for (LinkedList<StateVariable> dependency : allDependencies) {
+                        for (StateVariable stateVariable : dependency) {
+                            System.out.print(stateVariable.getLabel() + " ");
+                            partout.print(stateVariable.getLabel() + " ");
+                        }
+                        System.out.println();
+                        partout.println();
+                    }
+                    partout.flush();
+
+                }
+                catch (IOException e) {
+                    //
+                }
+            }
+        }
+    }
+
+    public static LinkedList<LinkedList<StateVariable>> readStateDependency(String filename,
+                                                                            StateStore stateStore){
+
+        LinkedList<LinkedList<StateVariable>> allDependencies = new LinkedList<>();
+
+        try{
+            FileInputStream fstream = new FileInputStream(filename);
+            DataInputStream in = new DataInputStream(fstream);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String strLine;
+            while ((strLine = br.readLine()) != null)   {
+                LinkedList<StateVariable> dependency = new LinkedList<>();
+
+                String[] tokens = strLine.split(",");
+
+                for(String string : tokens){
+                    stateStore.addStateVariable(string);
+                    StateVariable stateVariable = stateStore.getStateVariable(string);
+                    dependency.add(stateVariable);
+                }
+
+                allDependencies.add(dependency);
+            }
+            in.close();
+        }
+        catch(FileNotFoundException ex){
+            ex.printStackTrace();
+        }
+        catch(IOException ex) {
+            ex.printStackTrace();;
+        }
+
+
+        return allDependencies;
+    }
+
 
 }

@@ -1,5 +1,6 @@
 package statefulsharding.MilpOpt;
 
+import statefulsharding.State.GenerateStates;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
 import statefulsharding.Traffic.TrafficDemand;
@@ -7,6 +8,10 @@ import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -17,68 +22,16 @@ public class TestingClass {
 
     public static void main(String[] args){
 
-        int capacity = Integer.MAX_VALUE;
+        int depSize = 2;
+        int depRun = 1;
 
-        int size = 3;
-
-        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
-                ManhattanGraphGen.mType.UNWRAPPED, false, false);
-
-        ListGraph graph = manhattanGraphGen.getManhattanGraph();
-
-        TrafficStore trafficStore = new TrafficStore();
-
-        TrafficDemand trafficDemand1 = new TrafficDemand(graph.getVertex(0),graph.getVertex(8),1);
-        //TrafficDemand trafficDemand2 = new TrafficDemand(graph.getVertex(1),graph.getVertex(2),1);
-        //TrafficDemand trafficDemand3 = new TrafficDemand(graph.getVertex(2),graph.getVertex(0),1);
-        //TrafficDemand trafficDemand4 = new TrafficDemand(graph.getVertex(3),graph.getVertex(0),1);
-
-
-        trafficStore.addTrafficDemand(trafficDemand1);
-        /*
-        trafficStore.addTrafficDemand(trafficDemand2);
-        trafficStore.addTrafficDemand(trafficDemand3);
-        trafficStore.addTrafficDemand(trafficDemand4);
-        */
-
-        StateVariable A = new StateVariable("A");
-        StateVariable B = new StateVariable("B");
-
-        Set<StateVariable> states = new HashSet<>();
-
-        states.add(A);
-        states.add(B);
+        String filename = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/StateDependencies/"
+                 + "StateDependencies_" + depSize + "_" + depRun + ".txt";
 
         StateStore stateStore = new StateStore();
-        stateStore.addStateVariable(A);
-        stateStore.addStateVariable(B);
 
-        HashMap<TrafficDemand, LinkedList<StateVariable>> Xf = new HashMap<>();
-
-        Xf.put(trafficDemand1, new LinkedList<>());
-        Xf.get(trafficDemand1).add(A);
-        Xf.get(trafficDemand1).add(B);
-
-
-        /*
-
-        Xf.put(trafficDemand2, new LinkedList<>());
-        Xf.get(trafficDemand2).add(B);
-
-        Xf.put(trafficDemand3, new LinkedList<>());
-        Xf.get(trafficDemand3).add(A);
-        Xf.get(trafficDemand3).add(B);
-
-        Xf.put(trafficDemand4, new LinkedList<>());
-        Xf.get(trafficDemand4).add(A);
-        Xf.get(trafficDemand4).add(B);
-        */
-
-        SNAPDependency snapDependency = new SNAPDependency(graph, trafficStore, false,
-                true, states, Xf, stateStore);
-
-        snapDependency.optimize();
-        snapDependency.printSolution();
+        LinkedList<LinkedList<StateVariable>> allDependencies =
+                StateStore.readStateDependency(filename, stateStore);
 
 
     }
