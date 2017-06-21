@@ -26,7 +26,32 @@ public class BruteForceStateDependency {
          */
 
         int capacity = Integer.MAX_VALUE;
-        int size = 8;
+        int size = 7;
+        int trafficNo = 1;
+        int depSize = 3;
+        int depRun = 1;
+        int assignmentLine = 1;
+        String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
+
+        /**
+         * Generate states and numCopies
+         */
+
+        String filename = initial + "StateDependencies/" + "StateDependencies_" + depSize + "_" + depRun + ".txt";
+
+        StateStore stateStore = new StateStore();
+
+        LinkedList<LinkedList<StateVariable>> allDependencies =
+                StateStore.readStateDependency(filename, stateStore);
+
+        stateStore.setStateCopies("a",1);
+        stateStore.setStateCopies("b",1);
+        stateStore.setStateCopies("c",1);
+        //stateStore.setStateCopies("d",1);
+
+        /**
+         * Generate graph
+         */
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
                 ManhattanGraphGen.mType.UNWRAPPED, false, true);
@@ -39,25 +64,7 @@ public class BruteForceStateDependency {
         HashMap<Vertex, HashMap<Vertex, Integer>> dist = ShortestPath.FloydWarshall(graph, false,
                 null);
 
-        /**
-         * Generate states and numCopies
-         */
 
-        int depSize = 2;
-        int depRun = 1;
-
-        String filename = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/StateDependencies/"
-                + "StateDependencies_" + depSize + "_" + depRun + ".txt";
-
-        StateStore stateStore = new StateStore();
-
-        LinkedList<LinkedList<StateVariable>> allDependencies =
-                StateStore.readStateDependency(filename, stateStore);
-
-        stateStore.setStateCopies("a",2);
-        stateStore.setStateCopies("b",1);
-        //stateStore.setStateCopies("c",1);
-        //stateStore.setStateCopies("d",1);
 
         /**
          * Generate all state combinations
@@ -114,17 +121,14 @@ public class BruteForceStateDependency {
         HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies = new HashMap<>();
 
         TrafficStore trafficStore = new TrafficStore();
-        /*
+
         TrafficGenerator.fromFile(graph, trafficStore,
-                "../Dropbox/PhD_Work/Stateful_SDN/" +
-                        "snapsharding/analysis/" +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc-evaluateTrafficHeuristic-fixCopies_9/" +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc-evaluateTrafficHeuristic-fixCopies_9_run_1_traffic.txt"
+                initial +
+                        "MANHATTAN-UNWRAPPED_deterministicTfc-7/" +
+                        "MANHATTAN-UNWRAPPED_deterministicTfc-7_" + trafficNo + "_traffic.txt"
         );
-        */
 
-        TrafficGenerator.FisherYates(graph,1,trafficStore);
-
+        /*
 
         for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
             dependencies.put(trafficDemand,
@@ -132,6 +136,14 @@ public class BruteForceStateDependency {
                             0, allDependencies.size()
                     )));
         }
+        */
+
+        String trafficAssignmentFile = initial + "Size_TfcNo_NumStates_DependencyNo/"
+                 + size + "_" + trafficNo + "_" + numStates + "_" + depRun + ".txt";
+
+        dependencies = StateStore.assignStates2Traffic(trafficStore, allDependencies,
+                trafficAssignmentFile, assignmentLine);
+
 
         System.out.println();
         dependencies.forEach((trafficDemand, states) -> {

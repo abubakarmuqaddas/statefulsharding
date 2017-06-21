@@ -1,10 +1,14 @@
 package statefulsharding.State;
 
+import statefulsharding.Traffic.TrafficDemand;
+import statefulsharding.Traffic.TrafficStore;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by root on 6/11/17.
@@ -205,6 +209,47 @@ public class StateStore {
 
 
         return allDependencies;
+    }
+
+    public static HashMap<TrafficDemand, LinkedList<StateVariable>> assignStates2Traffic(
+                                            TrafficStore trafficStore,
+                                            LinkedList<LinkedList<StateVariable>> allDependencies,
+                                            String filename,
+                                            int assignmentLine){
+
+        HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies = new HashMap<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            String[] strNums;
+            int i = 1;
+            int destination;
+
+            while ((line = br.readLine()) != null) {
+                // process the line.
+                if (i==assignmentLine){
+
+                    strNums = line.split(",");
+
+                    LinkedList<TrafficDemand> trafficDemands = trafficStore.getTrafficDemands();
+
+                    for(int j=0 ; j<trafficStore.getNumTrafficDemands() ; j++){
+                        dependencies.put(trafficDemands.get(j),
+                                allDependencies.get(
+                                        Integer.parseInt(strNums[j])
+                                ));
+                    }
+
+                    break;
+                }
+                i++;
+            }
+        }
+        catch(IOException e){
+            System.out.println("FileNotFoundException " + e + ", Filename: " + filename);
+        }
+
+        return dependencies;
     }
 
 

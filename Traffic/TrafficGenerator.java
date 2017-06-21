@@ -81,7 +81,7 @@ public class TrafficGenerator {
 
                     source=Integer.parseInt(strNums[0]);
                     destination=Integer.parseInt(strNums[1]);
-                    demand=Integer.parseInt(strNums[2]);
+                    demand=Double.parseDouble(strNums[2]);
 
                     trafficStore.addTrafficDemand(
                             new TrafficDemand(
