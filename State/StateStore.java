@@ -234,10 +234,15 @@ public class StateStore {
                     LinkedList<TrafficDemand> trafficDemands = trafficStore.getTrafficDemands();
 
                     for(int j=0 ; j<trafficStore.getNumTrafficDemands() ; j++){
-                        dependencies.put(trafficDemands.get(j),
-                                allDependencies.get(
-                                        Integer.parseInt(strNums[j])
-                                ));
+                        try {
+                            dependencies.put(trafficDemands.get(j),
+                                    allDependencies.get(
+                                            Integer.parseInt(strNums[j])
+                                    ));
+                        }
+                        catch(ArrayIndexOutOfBoundsException e){
+                            int d=1;
+                        }
                     }
 
                     break;

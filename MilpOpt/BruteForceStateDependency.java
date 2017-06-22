@@ -11,6 +11,7 @@ import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.graph.algorithms.getNCombinations;
+import statefulsharding.heuristic.TrafficHeuristic;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.*;
@@ -26,12 +27,19 @@ public class BruteForceStateDependency {
          */
 
         int capacity = Integer.MAX_VALUE;
-        int size = 7;
+        int size = 6;
         int trafficNo = 1;
         int depSize = 3;
-        int depRun = 1;
+        int depRun = 4;
         int assignmentLine = 1;
+        int[] numCopies = new int[]{2,1,1,1,1,1,1,1};
+
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
+        String trafficFile = initial +
+                "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_6/" +
+                "MANHATTAN-UNWRAPPED_deterministicTfc_optimal_6_run_" + trafficNo + "_traffic.txt";
+
+
 
         /**
          * Generate states and numCopies
@@ -44,10 +52,10 @@ public class BruteForceStateDependency {
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 StateStore.readStateDependency(filename, stateStore);
 
-        stateStore.setStateCopies("a",1);
-        stateStore.setStateCopies("b",1);
-        stateStore.setStateCopies("c",1);
-        //stateStore.setStateCopies("d",1);
+        for(int i=0 ; i<depSize ; i++){
+            stateStore.setStateCopies(GenerateStates.getCharForNumber(i), numCopies[i]);
+        }
+
 
         /**
          * Generate graph
@@ -122,11 +130,7 @@ public class BruteForceStateDependency {
 
         TrafficStore trafficStore = new TrafficStore();
 
-        TrafficGenerator.fromFile(graph, trafficStore,
-                initial +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc-7/" +
-                        "MANHATTAN-UNWRAPPED_deterministicTfc-7_" + trafficNo + "_traffic.txt"
-        );
+        TrafficGenerator.fromFile(graph, trafficStore, trafficFile);
 
         /*
 
@@ -218,6 +222,18 @@ public class BruteForceStateDependency {
         System.out.println("Best combination traffic: " + minCombination);
 
         System.out.println(bestCombination);
+
+        TrafficHeuristic trafficHeuristic = new TrafficHeuristic(graph,
+                                                                trafficStore,
+                1,
+                TrafficHeuristic.hType.shortestpath,
+                false,
+                false
+        );
+
+        System.out.println("Shortest path traffic is: " + trafficHeuristic.getTotalTraffic());
+
+
     }
 
     private static void CartesianProduct(HashMap<StateVariable, LinkedList<LinkedList<String>>> stateCombinations,

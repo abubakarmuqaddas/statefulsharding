@@ -75,7 +75,7 @@ public class GenerateStates {
         return dependencies;
     }
 
-    private static String getCharForNumber(int i){
+    public static String getCharForNumber(int i){
         return i >-1 && i<26 ? String.valueOf((char)(i+97)) : null;
     }
 
