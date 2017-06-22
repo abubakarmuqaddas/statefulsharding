@@ -26,12 +26,15 @@ public class ListGraph {
      */
     private int numVertices;
 
+    private LinkedList<Integer> vertices;
+
     /**
      * Constructor
      */
     public ListGraph(){
         adjList = new HashMap<>();
         vertexMap = new HashMap<>();
+        vertices = new LinkedList<>();
         numVertices=0;
     }
 
@@ -42,6 +45,7 @@ public class ListGraph {
     public void addVertex(Integer label){
 
         vertexMap.put(label,new Vertex(label));
+        vertices.add(label);
         numVertices++;
     }
 
@@ -56,6 +60,7 @@ public class ListGraph {
      */
     public void addVertex(Integer label, double xcoord, double ycoord){
         vertexMap.put(label,new Vertex(label, xcoord, ycoord));
+        vertices.add(label);
         numVertices++;
     }
 
@@ -335,6 +340,13 @@ public class ListGraph {
 
         }
         return totalDegree/numVertices;
+    }
+
+    /**
+     * @return Get integer labels of all vertices
+     */
+    public LinkedList<Integer> getVerticesInt(){
+        return vertices;
     }
 
     /**

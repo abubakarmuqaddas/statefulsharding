@@ -61,8 +61,7 @@ public class BruteForce {
                 vertices.add(i);
             }
 
-            getNCombinations getCombinations = new getNCombinations(vertices, copy);
-            LinkedList<LinkedList<Integer>> copyCombinations = getCombinations.getResult();
+            LinkedList<LinkedList<Integer>> copyCombinations = getNCombinations.getCombinations(vertices, copy);
 
             HashMap<LinkedList<Integer>, Integer> Ttot = new HashMap<>();
 

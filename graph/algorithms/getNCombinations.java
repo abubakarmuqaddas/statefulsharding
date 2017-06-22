@@ -7,20 +7,15 @@ import java.util.LinkedList;
  */
 public class getNCombinations {
 
-    private LinkedList<Integer> v;
-    private LinkedList<Integer> data;
-    private int N;
-    private LinkedList<LinkedList<Integer>> result;
-
-    public getNCombinations(LinkedList<Integer> data, int N){
-        this.data = data;
-        this.N = N;
-        result = new LinkedList<>();
-        v = new LinkedList();
-        recursive(0);
+    public static LinkedList<LinkedList<Integer>> getCombinations(LinkedList<Integer> data, int N){
+        LinkedList<LinkedList<Integer>> result = new LinkedList<>();
+        LinkedList<Integer> v = new LinkedList();
+        recursive(0, N, result, v, data);
+        return result;
     }
 
-    private void recursive(int n){
+    private static void recursive(int n, int N, LinkedList<LinkedList<Integer>> result,
+                                  LinkedList<Integer> v, LinkedList<Integer> data){
         int p;
         if(n==N)
             result.add(new LinkedList<>(v));
@@ -33,17 +28,11 @@ public class getNCombinations {
             for(int j = p+1 ; j<data.size() ; j++){
                 int i = data.get(j);
                 v.add(i);
-                recursive(n+1);
+                recursive(n+1, N, result, v, data);
                 v.removeLast();
             }
         }
     }
-
-    public LinkedList<LinkedList<Integer>> getResult(){
-        return result;
-    }
-
-
 
 
 }
