@@ -11,6 +11,7 @@ import statefulsharding.graph.ListGraph;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by root on 4/5/17.
@@ -19,62 +20,16 @@ public class TestingClass {
 
     public static void main(String[] args){
 
-        int capacity = Integer.MAX_VALUE;
+        for(int j=0 ; j<10 ; j++) {
 
-        int size = 3;
+            for (int i = 0; i < 81; i++) {
 
-        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
-                ManhattanGraphGen.mType.UNWRAPPED, false, true);
+                System.out.print(ThreadLocalRandom.current().nextInt(
+                        0, 5) + ",");
 
-        ListGraph graph = manhattanGraphGen.getManhattanGraph();
-
-        TrafficStore trafficStore = new TrafficStore();
-
-        TrafficDemand trafficDemand1 = new TrafficDemand(
-                graph.getVertex(0),graph.getVertex(0),1
-        );
-        TrafficDemand trafficDemand2 = new TrafficDemand(
-                graph.getVertex(8),graph.getVertex(6),1
-        );
-
-        trafficStore.addTrafficDemand(trafficDemand1);
-        trafficStore.addTrafficDemand(trafficDemand2);
-
-        StateVariable A = new StateVariable("A", 2);
-        StateVariable B = new StateVariable("B", 1);
-        StateStore stateStore = new StateStore();
-        stateStore.addStateVariable(A);
-        stateStore.addStateVariable(B);
-        stateStore.setStateCopies("A",2);
-        stateStore.setStateCopies("B",1);
-
-
-        HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies = new HashMap<>();
-
-        dependencies.put(trafficDemand1, new LinkedList<>());
-        dependencies.put(trafficDemand2, new LinkedList<>());
-
-        dependencies.get(trafficDemand1).add(A);
-        dependencies.get(trafficDemand2).add(A);
-        dependencies.get(trafficDemand2).add(B);
-
-        boolean verbose = true;
-        boolean fixConstraints = false;
-
-        OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
-
-        ShardedSNAPDependency2 shardedSNAPDependency = new ShardedSNAPDependency2(graph,
-                                                                                trafficStore,
-                                                                                dependencies,
-                                                                                optimizationOptions,
-                                                                                stateStore);
-        boolean result = shardedSNAPDependency.optimize();
-        System.out.println("Result: " + result);
-
-        if(result)
-            shardedSNAPDependency.printSolution();
-
-
+            }
+            System.out.println();
+        }
 
     }
 }

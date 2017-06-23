@@ -223,10 +223,8 @@ public class StateStore {
             String line;
             String[] strNums;
             int i = 1;
-            int destination;
 
             while ((line = br.readLine()) != null) {
-                // process the line.
                 if (i==assignmentLine){
 
                     strNums = line.split(",");

@@ -13,6 +13,8 @@ import statefulsharding.graph.algorithms.getNCombinations;
 import statefulsharding.heuristic.TrafficHeuristic;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
+import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,17 +41,23 @@ public class BruteForceStateDependency2{
          */
 
         int capacity = Integer.MAX_VALUE;
-        int size = 7;
+        int size = 5;
         int trafficNo = 1;
         int depSize = 3;
         int depRun = 1;
-        int assignmentLine = 1;
-        int[] numCopies = new int[]{2,1,1,1,1,1,1,1};
+        int assignmentLineStart = 1;
+        int assignmentLineFinish = 1;
+        boolean copiesLimited = false;
+        int numStatesPerSwitch = 1;
+        int[] numCopies = new int[]{2,2,2,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
-        String trafficFile = initial +
-                "MANHATTAN-UNWRAPPED_deterministicTfc-7/" +
-                "MANHATTAN-UNWRAPPED_deterministicTfc-7_" + trafficNo + "_traffic.txt";
+        String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
+
+        String trafficFile = initial2 +
+                            "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
+                            ".csv";
+
 
         /**
          * Generate graph
@@ -72,7 +80,8 @@ public class BruteForceStateDependency2{
 
         TrafficStore trafficStore = new TrafficStore();
 
-        TrafficGenerator.fromFile(graph, trafficStore, trafficFile);
+        TrafficGenerator.fromFileLinebyLine(graph, trafficStore, trafficNo, 1, true,
+                trafficFile);
 
 
         /**
@@ -135,44 +144,69 @@ public class BruteForceStateDependency2{
          * Assign traffic to states!!
          */
 
+
         String trafficAssignmentFile = initial + "Size_TfcNo_NumStates_DependencyNo/"
                  + size + "_" + trafficNo + "_" + numStates + "_" + depRun + ".txt";
 
-        HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies =
+        LinkedList<LinkedList<String>> allBestCombinations = new LinkedList<>();
+        LinkedList<Integer> bestTraffic = new LinkedList<>();
+
+        for(int assignmentLine = assignmentLineStart ; assignmentLine<=assignmentLineFinish ; assignmentLine++) {
+
+            HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies =
                 StateStore.assignStates2Traffic(trafficStore, allDependencies,
                 trafficAssignmentFile, assignmentLine);
 
-        System.out.println();
-        dependencies.forEach((trafficDemand, states) -> {
-            System.out.println(trafficDemand.getSource().getLabel() + " -> " +
-                    trafficDemand.getDestination().getLabel());
-            System.out.print("Var: ");
-            states.forEach(stateVariable -> {
-                System.out.print(stateVariable.getLabel() + " ");
+
+            System.out.println();
+            dependencies.forEach((trafficDemand, states) -> {
+                System.out.println(trafficDemand.getSource().getLabel() + " -> " +
+                        trafficDemand.getDestination().getLabel());
+                System.out.print("Var: ");
+                states.forEach(stateVariable -> {
+                    System.out.print(stateVariable.getLabel() + " ");
+                });
+                System.out.println();
+                System.out.println();
             });
-            System.out.println();
-            System.out.println();
-        });
 
-        CartesianProduct(stateCopyCombinations, numStates, stateVariables,
-                0, new LinkedList<>(), trafficStore, stateStore, dependencies, graph, dist);
+            CartesianProduct(stateCopyCombinations, numStates, stateVariables,
+                    0, new LinkedList<>(), trafficStore, stateStore, dependencies, graph, dist,
+                    copiesLimited, numStatesPerSwitch, assignmentLine);
 
 
-        System.out.println("Best combination traffic: " + minCombination);
+            System.out.println("Best combination traffic: " + minCombination);
 
-        System.out.println(bestCombination);
+            System.out.println(bestCombination);
 
-
-
+        /*
         TrafficHeuristic trafficHeuristic = new TrafficHeuristic(graph,
                                                                 trafficStore,
                                                                 1,
                                                                 TrafficHeuristic.hType.shortestpath,
                                                                 false,
                                                                 false
-        );
+                                                                );
 
         System.out.println("Shortest path traffic is: " + trafficHeuristic.getTotalTraffic());
+        */
+            LinkedList<String> currentBestcombination = new LinkedList<>();
+            for(String string: bestCombination){
+                currentBestcombination.add(string);
+            }
+            allBestCombinations.add(currentBestcombination);
+            bestTraffic.add(minCombination);
+
+            currentCombination = 0;
+            minCombination = Integer.MAX_VALUE;
+            bestCombination = new LinkedList<>();
+
+        }
+
+        System.out.println(allBestCombinations.toString());
+        System.out.println(bestTraffic.toString());
+
+
 
 
     }
@@ -186,10 +220,38 @@ public class BruteForceStateDependency2{
                                          StateStore stateStore,
                                          HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
                                          ListGraph graph,
-                                         HashMap<Vertex, HashMap<Vertex, Integer>> dist){
+                                         HashMap<Vertex, HashMap<Vertex, Integer>> dist,
+                                         boolean copiesLimited,
+                                         int numStatesPerSwitch,
+                                         int assignmentLine){
 
         if(currentLevel==numStates){
-            LinkedList<String> combination = buildup;
+
+            if(copiesLimited){
+                for(int i=0 ; i<buildup.size() ; i++){
+
+                    String[] splitted = buildup.get(i).split(",");
+                    int occurence = 1;
+                    int target = Integer.parseInt(splitted[1]);
+
+                    for(int j=i+1 ; j<buildup.size() ; j++){
+
+                        String[] splitted2 = buildup.get(j).split(",");
+
+                        int other = Integer.parseInt(splitted2[1]);
+
+
+                        if(other==target)
+                            occurence++;
+                    }
+
+                    if(occurence>numStatesPerSwitch) {
+                        return;
+                    }
+                }
+            }
+
+
 
             int combinationTraffic = 0;
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
@@ -204,7 +266,7 @@ public class BruteForceStateDependency2{
                     int minStatePathSize = Integer.MAX_VALUE;
                     String minStateCopy = null;
 
-                    for(String string : combination){
+                    for(String string : buildup){
 
                         String[] splitted = string.split(",");
                         StateVariable splittedVariable = stateStore.getStateVariable(splitted[0]);
@@ -231,16 +293,21 @@ public class BruteForceStateDependency2{
                 combinationTraffic = combinationTraffic + pathSize;
             }
 
-            if(currentCombination%500 ==0){
-                System.out.println(combination + "\t" + "Processed: " + currentCombination + "/" + numCombinations + ", " +
-                        Math.round(((double) currentCombination / numCombinations) * 10000) / 100.0 + "%");
+            if(((currentCombination/numCombinations)*100.0)%20 ==0){
+
+                double pCent = Math.round(((double) currentCombination / numCombinations) * 10000) / 100.0;
+
+                System.out.println("Run: " + assignmentLine
+                        + " Processed: " + currentCombination + "/" + numCombinations + ", " +
+                        pCent + "%");
+
             }
 
             currentCombination++;
 
             if(combinationTraffic<minCombination){
                 bestCombination = new LinkedList<>();
-                for(String string: combination){
+                for(String string: buildup){
                     bestCombination.add(string);
                 }
                 minCombination = combinationTraffic;
@@ -251,11 +318,14 @@ public class BruteForceStateDependency2{
             for(LinkedList<String> linkedList : stateCombinations.get(stateVariables.get(currentLevel))){
                 buildup.addAll(linkedList);
                 CartesianProduct(stateCombinations, numStates, stateVariables,
-                        currentLevel+1, buildup, trafficStore, stateStore, dependencies, graph, dist);
+                        currentLevel+1, buildup, trafficStore, stateStore, dependencies, graph, dist,
+                        copiesLimited, numStatesPerSwitch, assignmentLine);
                 for(String stateCopy: linkedList)
                     buildup.remove(stateCopy);
             }
         }
     }
+
+
 
 }

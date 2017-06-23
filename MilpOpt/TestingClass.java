@@ -8,15 +8,18 @@ import statefulsharding.graph.algorithms.getNCombinations;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 public class TestingClass {
 
     private static int d;
+    private static int numVarCopy;
 
     static {
         d = 0;
+        numVarCopy = 0;
     }
 
     public static void main(String[] args){
@@ -36,7 +39,7 @@ public class TestingClass {
 
         int numCombinations = 1;
 
-        HashMap<StateVariable, LinkedList<LinkedList<String>>> stateCopyCombinations = new HashMap<>();
+        HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateCopyCombinations = new HashMap<>();
 
         for (StateVariable stateVariable : stateStore.getStateVariables()) {
 
@@ -46,11 +49,10 @@ public class TestingClass {
             stateCopyCombinations.put(stateVariable, new LinkedList<>());
             for (LinkedList<Integer> combination : result) {
 
-                LinkedList<String> temp = new LinkedList<>();
+                LinkedList<Integer> temp = new LinkedList<>();
 
                 for (Integer integer : combination) {
-                    String stateCopy = stateVariable.getLabel() + "," + integer;
-                    temp.add(stateCopy);
+                    temp.add(integer);
                 }
 
                 stateCopyCombinations.get(stateVariable).add(temp);
@@ -58,10 +60,14 @@ public class TestingClass {
             numCombinations = numCombinations*stateCopyCombinations.get(stateVariable).size();
         }
 
+        for(StateVariable stateVariable : stateStore.getStateVariables()){
+            numVarCopy += stateVariable.getCopies();
+        }
+
 
         ArrayList<StateVariable> stateVariables = new ArrayList(stateStore.getStateVariables());
 
-        String[] combinations = new String[numCombinations];
+        int[][] combinations = new int[numCombinations][numVarCopy];
         int numStates = stateStore.getNumStates();
 
         CartesianProduct(stateCopyCombinations, combinations, numStates, stateVariables, 0,
@@ -69,31 +75,31 @@ public class TestingClass {
 
     }
 
-    private static void CartesianProduct(HashMap<StateVariable, LinkedList<LinkedList<String>>> stateCombinations,
-                                         String[] combinations,
+    private static void CartesianProduct(HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateCombinations,
+                                         int[][] combinations,
                                          int numStates,
                                          ArrayList<StateVariable> stateVariables,
                                          int currentLevel,
-                                         LinkedList<String> buildup){
+                                         LinkedList<Integer> buildup){
 
 
 
         if(currentLevel==numStates){
-            String temp = buildup.get(0);
-            for(int i=1 ; i<buildup.size() ; i++){
-                temp = temp + "-" + buildup.get(i);
+
+            for(int i=0 ; i<numVarCopy ; i++){
+                combinations[d][i]= buildup.get(i);
             }
-            combinations[d]=(temp);
-            d++;
-            System.out.println(temp);
+
+            System.out.println(Arrays.toString(combinations[d]));
+
         }
         else{
-            for(LinkedList<String> linkedList : stateCombinations.get(stateVariables.get(currentLevel))){
+            for(LinkedList<Integer> linkedList : stateCombinations.get(stateVariables.get(currentLevel))){
                 buildup.addAll(linkedList);
                 CartesianProduct(stateCombinations, combinations, numStates,
                         stateVariables,currentLevel+1, buildup);
-                for(String stateCopy: linkedList)
-                    buildup.remove(stateCopy);
+                for(Integer integer: linkedList)
+                    buildup.remove(integer);
             }
         }
     }

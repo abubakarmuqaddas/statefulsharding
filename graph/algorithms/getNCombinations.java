@@ -26,8 +26,7 @@ public class getNCombinations {
                 p=-1;
 
             for(int j = p+1 ; j<data.size() ; j++){
-                int i = data.get(j);
-                v.add(i);
+                v.add(data.get(j));
                 recursive(n+1, N, result, v, data);
                 v.removeLast();
             }
