@@ -41,7 +41,7 @@ public class BruteForceStateDependency2{
          */
 
         int capacity = Integer.MAX_VALUE;
-        int size = 5;
+        int size = 7;
         int trafficNo = 1;
         int depSize = 3;
         int depRun = 1;
@@ -49,7 +49,7 @@ public class BruteForceStateDependency2{
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{2,2,2,1,1,1,1,1};
+        int[] numCopies = new int[]{3,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
