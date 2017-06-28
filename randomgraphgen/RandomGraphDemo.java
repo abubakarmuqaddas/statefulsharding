@@ -168,8 +168,6 @@ public class RandomGraphDemo {
         });
 
 
-
-
         boolean verbose = true;
         boolean fixConstraints = false;
 

@@ -83,7 +83,8 @@ public class EvaluateTrafficHeuristicBetTfc {
                     TrafficGenerator.fromFile(graph, trafficStore,
                             "analysis/" + oldExperiment + "/" + oldExperiment + "_run_" + traffic
                                     + "_traffic.txt");
-                } else {
+                }
+                else {
                     TrafficGenerator.FisherYates(graph, 1.0, trafficStore);
                     if (writeTraffic)
                         TrafficGenerator.writeTraffic(trafficStore,
