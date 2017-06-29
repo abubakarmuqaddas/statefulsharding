@@ -19,16 +19,18 @@ import java.util.LinkedList;
 
 public class BruteForceStateDependencyStateSync {
 
-    private static int numCombinations;
-    private static int currentCombination;
+    private static long numCombinations;
+    private static long currentCombination;
     private static double minCombination;
     private static LinkedList<String> bestCombination;
+    private static double alpha;
 
     static {
         numCombinations = 1;
         currentCombination = 0;
         minCombination = Double.MAX_VALUE;
         bestCombination = new LinkedList<>();
+        alpha=0.1;
     }
 
     public static void main(String[] args) {
@@ -38,15 +40,15 @@ public class BruteForceStateDependencyStateSync {
          */
 
         int capacity = Integer.MAX_VALUE;
-        int size = 9;
+        int size = 5;
         int trafficNo = 1;
-        int depSize = 2;
+        int depSize = 4;
         int depRun = 1;
         int assignmentLineStart = 1;
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{2,2,1,1,1,1,1,1};
+        int[] numCopies = new int[]{2,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -304,8 +306,6 @@ public class BruteForceStateDependencyStateSync {
                 pathSize = pathSize + dist.get(currentSrc).get(currentDst);
                 combinationTraffic = combinationTraffic + pathSize;
             }
-
-            double alpha=1;
 
             combinationTraffic += alpha*getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
 
