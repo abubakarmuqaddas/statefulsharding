@@ -4,6 +4,7 @@ import statefulsharding.Pair;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
+import statefulsharding.graph.LoadGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
@@ -19,8 +20,13 @@ public class EvaluateTrafficHeuristicPoster {
 
     public static void main(String[] args) {
 
-        int startSize = 3;
-        int finalSize = 15;
+        /*
+            Watts Strogatz
+         */
+        double p=0.5;
+
+        int startSize = 12;
+        int finalSize = 120;
 
         int startTraffic = 1;
         int endTraffic = 10;
@@ -37,11 +43,13 @@ public class EvaluateTrafficHeuristicPoster {
         HashMap<Integer, HashMap<Integer, ArrayList<Double>>>
                 TrafficPartition = new HashMap<>();
 
-        for(int size = startSize ; size<=finalSize ; size++) {
+        //for(int size = startSize ; size<=finalSize ; size++) {
+
+        for(int size = startSize ; size<=finalSize ; size+=12) {
 
             TrafficShortestPath.put(size, new HashMap<>());
             TrafficPartition.put(size, new HashMap<>());
-
+            /*
             ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
                     ManhattanGraphGen.mType.UNWRAPPED, false, true);
             ListGraph graph = manhattanGraphGen.getManhattanGraph();
@@ -49,17 +57,38 @@ public class EvaluateTrafficHeuristicPoster {
             String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                     "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
                     ".csv";
+                    */
+
+            /*
+            Watts Strogatz
+             */
+
+
+            String graphLocation = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                                    "topologies_traffic/Traffic/WS_graph_" + p +
+                                    "/WS_graph" + size + "_" + p + "_8.csv";
+            ListGraph graph = LoadGraph.GraphParserJ(graphLocation, Integer.MAX_VALUE, true);
+
 
             for(int traffic = startTraffic ; traffic<=endTraffic ; traffic++) {
 
                 TrafficStore trafficStore = new TrafficStore();
 
+                /*
                 TrafficGenerator.fromFileLinebyLine(graph,
                                                     trafficStore,
                                                     traffic,
                                                     1,
                                                     true,
                                                     trafficFile);
+                                                    */
+
+
+                TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, true,
+                        "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                        "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
+                                ".csv");
+
 
                 TrafficHeuristic trafficHeuristicSP = new TrafficHeuristic(graph,
                                                                             trafficStore,
@@ -72,8 +101,8 @@ public class EvaluateTrafficHeuristicPoster {
 
                 for(int numCopies = startCopies ; numCopies<=endCopies ; numCopies++){
 
-                    //System.out.println("Size: " + size + ", Traffic: " + traffic
-                    //        + ", Copy: " + numCopies);
+                    System.out.println("Size: " + size + ", Traffic: " + traffic
+                            + ", Copy: " + numCopies);
 
                     TrafficPartition.get(size).putIfAbsent(numCopies, new ArrayList<>());
 
@@ -115,11 +144,11 @@ public class EvaluateTrafficHeuristicPoster {
             Collection<Double> copy3 = TrafficPartition.get(size).get(3);
             Collection<Double> copy4 = TrafficPartition.get(size).get(4);
 
-            Pair<Double, Double> copy0stats = stdev(copy0);
-            Pair<Double, Double> copy1stats = stdev(copy1);
-            Pair<Double, Double> copy2stats = stdev(copy2);
-            Pair<Double, Double> copy3stats = stdev(copy3);
-            Pair<Double, Double> copy4stats = stdev(copy4);
+            Pair<Double, Double> copy0stats = interval(copy0);
+            Pair<Double, Double> copy1stats = interval(copy1);
+            Pair<Double, Double> copy2stats = interval(copy2);
+            Pair<Double, Double> copy3stats = interval(copy3);
+            Pair<Double, Double> copy4stats = interval(copy4);
 
             //System.out.println("Stats for size 3");
             /*size copy0m copy0l copy0u copy1 copy2 copy3*/
@@ -155,7 +184,7 @@ public class EvaluateTrafficHeuristicPoster {
      * @return <mean><1/2 interval>
      */
 
-    private static Pair<Double, Double> stdev(Collection<Double> values){
+    private static Pair<Double, Double> interval(Collection<Double> values){
         double sum = 0.0;
         double num = 0.0;
 
@@ -172,7 +201,7 @@ public class EvaluateTrafficHeuristicPoster {
 
         double dev = Math.sqrt(num/values.size());
 
-        return new Pair<>(mean, (dev*1.96)/values.size());
+        return new Pair<>(mean, (dev*1.96)/Math.sqrt(values.size()));
     }
 
     private static double round2(double number){
