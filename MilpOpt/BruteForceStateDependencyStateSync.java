@@ -24,6 +24,7 @@ public class BruteForceStateDependencyStateSync {
     private static double minCombination;
     private static LinkedList<String> bestCombination;
     private static double alpha;
+    private static boolean stateSyncRequired;
 
     static {
         numCombinations = 1;
@@ -31,6 +32,7 @@ public class BruteForceStateDependencyStateSync {
         minCombination = Double.MAX_VALUE;
         bestCombination = new LinkedList<>();
         alpha=0.1;
+        stateSyncRequired = true;
     }
 
     public static void main(String[] args) {
@@ -39,16 +41,17 @@ public class BruteForceStateDependencyStateSync {
          * Generate Graph
          */
 
+        boolean copySameSwitchAllowed = true;
         int capacity = Integer.MAX_VALUE;
-        int size = 4;
+        int size = 3;
         int trafficNo = 1;
-        int depSize = 3;
+        int depSize = 1;
         int depRun = 1;
         int assignmentLineStart = 1;
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{3,3,3,1,1,1,1,1};
+        int[] numCopies = new int[]{3,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -105,8 +108,14 @@ public class BruteForceStateDependencyStateSync {
 
         for (StateVariable stateVariable : stateStore.getStateVariables()) {
 
-            LinkedList<LinkedList<Integer>> result = getNCombinations.getCombinations(
-                                                                    graph.getVerticesInt(), stateVariable.getCopies());
+            LinkedList<LinkedList<Integer>> result = null;
+
+            if(copySameSwitchAllowed) {
+                result = getNCombinations.getPermutations(stateVariable.getCopies(), graph.getVerticesInt());
+            }
+            else{
+                result = getNCombinations.getCombinations(graph.getVerticesInt(), stateVariable.getCopies());
+            }
 
             stateCopyCombinations.put(stateVariable, new LinkedList<>());
             for(LinkedList<Integer> combination : result){
@@ -307,7 +316,8 @@ public class BruteForceStateDependencyStateSync {
                 combinationTraffic = combinationTraffic + pathSize;
             }
 
-            combinationTraffic += alpha*getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
+            if(stateSyncRequired)
+                combinationTraffic += alpha*getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
 
             if(((currentCombination/numCombinations)*100.0)%20 ==0){
 
