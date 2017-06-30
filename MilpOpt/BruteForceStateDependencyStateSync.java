@@ -40,15 +40,15 @@ public class BruteForceStateDependencyStateSync {
          */
 
         int capacity = Integer.MAX_VALUE;
-        int size = 5;
+        int size = 4;
         int trafficNo = 1;
-        int depSize = 4;
+        int depSize = 3;
         int depRun = 1;
         int assignmentLineStart = 1;
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{2,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{3,3,3,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -311,7 +311,7 @@ public class BruteForceStateDependencyStateSync {
 
             if(((currentCombination/numCombinations)*100.0)%20 ==0){
 
-                double pCent = Math.round(((double) currentCombination / numCombinations) * 10000) / 100.0;
+                double pCent = Math.round(((double) currentCombination / numCombinations) * 100000000) / 1000000.0;
 
                 System.out.println("Run: " + assignmentLine
                         + " Processed: " + currentCombination + "/" + numCombinations + ", " +
