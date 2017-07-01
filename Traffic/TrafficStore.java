@@ -7,9 +7,7 @@ import statefulsharding.graph.Vertex;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-/**
- * Created by build on 01/12/16.
- */
+
 public class TrafficStore {
 
     private LinkedList<TrafficDemand> trafficDemands;

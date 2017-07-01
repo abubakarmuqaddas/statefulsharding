@@ -12,11 +12,8 @@ import statefulsharding.graph.algorithms.getNCombinations;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Created by root on 4/5/17.
- */
+
 public class TestingClass {
 
     public static void main(String[] args){
@@ -27,13 +24,13 @@ public class TestingClass {
             data.add(i);
         }
 
-        LinkedList<LinkedList<Integer>> comb = getNCombinations.getPermutations(
-                2, data
-        );
+        LinkedList<LinkedList<Integer>> result = getNCombinations.getPermutations(2, data);
 
-        comb.forEach(combination -> {
-            System.out.println(combination.toString());
-        });
+        int i=1;
+        for (LinkedList<Integer> linkedList : result) {
+            System.out.println(i++ + ": " + linkedList);
+        }
+
 
 
     }
