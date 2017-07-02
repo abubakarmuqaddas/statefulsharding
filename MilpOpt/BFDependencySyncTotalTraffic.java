@@ -1,14 +1,13 @@
 package statefulsharding.MilpOpt;
 
 import statefulsharding.State.GenerateStates;
+import statefulsharding.State.StateCopy;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
-import statefulsharding.graph.Edge;
 import statefulsharding.graph.ListGraph;
-import statefulsharding.graph.Path;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.graph.algorithms.getNCombinations;
@@ -18,23 +17,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+/**
+ * Brute force, minimizing the total traffic in the network
+ * State dependency and state sync included
+ */
 
-public class BruteForceStateDependencyStateSync2 {
+
+public class BFDependencySyncTotalTraffic {
 
     private static long numCombinations;
     private static long currentCombination;
-    private static double trafficCombination;
+    private static double minCombination;
+    private static LinkedList<String> bestCombination;
     private static double alpha;
     private static boolean stateSyncRequired;
-    private static double edgeMin;
-    private static LinkedList<String> bestEdgeCombination;
 
     static {
         numCombinations = 1;
         currentCombination = 0;
-        trafficCombination = 0;
-        edgeMin = Double.MAX_VALUE;
-        bestEdgeCombination = new LinkedList<>();
+        minCombination = Double.MAX_VALUE;
+        bestCombination = new LinkedList<>();
         alpha=0.1;
         stateSyncRequired = true;
     }
@@ -57,7 +59,7 @@ public class BruteForceStateDependencyStateSync2 {
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{3,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{2,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -76,26 +78,14 @@ public class BruteForceStateDependencyStateSync2 {
         ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
         /**
-         * Generate list of all paths
+         * Generate distances from all vertices
          */
 
-        HashMap<Vertex, HashMap<Vertex, Path>> allPaths = new HashMap<>();
+        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                ShortestPath.FloydWarshall(graph, false, null);
 
-        for(Vertex src : graph.getVertices()){
-            allPaths.put(src, new HashMap<>());
-            for(Vertex dst : graph.getVertices()){
-                if(!src.equals(dst)){
-                    allPaths.get(src).put(dst, ShortestPath.dijsktra(graph, src, dst));
-                }
-            }
-        }
-
-        /**
-         * Traffic utilization per edge
-         */
-
-        HashMap<Edge, Double> edgeUsage = new HashMap<>();
-        graph.getallEdges().forEach(edge -> edgeUsage.put(edge, 0.0));
+        LinkedList<LinkedList<String>> allBestCombinations = new LinkedList<>();
+        LinkedList<Double> bestTraffic = new LinkedList<>();
 
         /**
          * Generate states and numCopies
@@ -108,7 +98,7 @@ public class BruteForceStateDependencyStateSync2 {
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 StateStore.readStateDependency(filename, stateStore);
 
-        for(int i=0 ; i<depSize ; i++){
+        for (int i = 0; i < depSize; i++) {
             stateStore.setStateCopies(GenerateStates.getCharForNumber(i), numCopies[i]);
         }
         /**
@@ -121,22 +111,19 @@ public class BruteForceStateDependencyStateSync2 {
 
             LinkedList<LinkedList<Integer>> result = null;
 
-            if(copySameSwitchAllowed) {
-                result = getNCombinations
-                        .getPermutations(stateVariable.getCopies(), graph.getVerticesInt());
-            }
-            else{
-                result = getNCombinations
-                        .getCombinations(graph.getVerticesInt(), stateVariable.getCopies());
+            if (copySameSwitchAllowed) {
+                result = getNCombinations.getPermutations(stateVariable.getCopies(), graph.getVerticesInt());
+            } else {
+                result = getNCombinations.getCombinations(graph.getVerticesInt(), stateVariable.getCopies());
             }
 
             stateCopyCombinations.put(stateVariable, new LinkedList<>());
-            for(LinkedList<Integer> combination : result){
+            for (LinkedList<Integer> combination : result) {
 
                 LinkedList<String> temp = new LinkedList<>();
 
 
-                for(Integer integer : combination){
+                for (Integer integer : combination) {
 
                     String stateCopy = stateVariable.getLabel() + "," + integer;
 
@@ -145,13 +132,12 @@ public class BruteForceStateDependencyStateSync2 {
 
                 stateCopyCombinations.get(stateVariable).add(temp);
             }
-            numCombinations = numCombinations*stateCopyCombinations.get(stateVariable).size();
+            numCombinations = numCombinations * stateCopyCombinations.get(stateVariable).size();
         }
 
-        ArrayList<StateVariable> stateVariables = new ArrayList<>(stateStore.getStateVariables());
+        ArrayList<StateVariable> stateVariables = new ArrayList(stateStore.getStateVariables());
 
         int numStates = stateStore.getNumStates();
-
 
 
         for (LinkedList<StateVariable> dependency : allDependencies) {
@@ -161,9 +147,6 @@ public class BruteForceStateDependencyStateSync2 {
             System.out.println();
         }
 
-        LinkedList<LinkedList<String>> allBestCombinations = new LinkedList<>();
-        LinkedList<Double> bestTraffic = new LinkedList<>();
-
         for(trafficNo = trafficStart ; trafficNo<=trafficEnd ; trafficNo++) {
 
             /**
@@ -172,19 +155,26 @@ public class BruteForceStateDependencyStateSync2 {
 
             TrafficStore trafficStore = new TrafficStore();
 
-            TrafficGenerator.fromFileLinebyLine(graph, trafficStore, trafficNo, 1, true,
-                    trafficFile);
+            TrafficGenerator.fromFileLinebyLine(
+                    graph,
+                    trafficStore,
+                    trafficNo,
+                    1,
+                    true,
+                    trafficFile
+            );
+
 
             /**
              * Assign traffic to states!!
              */
 
+
             String trafficAssignmentFile = initial + "Size_TfcNo_NumStates_DependencyNo/"
                     + size + "_" + trafficNo + "_" + numStates + "_" + depRun + ".txt";
 
-
-
-            for (int assignmentLine = assignmentLineStart; assignmentLine <= assignmentLineFinish; assignmentLine++) {
+            for (int assignmentLine = assignmentLineStart; assignmentLine <= assignmentLineFinish;
+                 assignmentLine++) {
 
                 HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies =
                         StateStore.assignStates2Traffic(trafficStore, allDependencies,
@@ -215,38 +205,44 @@ public class BruteForceStateDependencyStateSync2 {
                         stateStore,
                         dependencies,
                         graph,
-                        allPaths,
-                        edgeUsage,
+                        dist,
                         copiesLimited,
                         numStatesPerSwitch,
                         assignmentLine,
                         stateSyncInfo);
 
 
-                System.out.println("Best combination: " + bestEdgeCombination + ", traffic: " +
-                        trafficCombination);
+                System.out.println("Best combination traffic: " + minCombination);
 
-
-                //System.out.println(bestCombination);
+                System.out.println(bestCombination);
 
                 LinkedList<String> currentBestcombination = new LinkedList<>();
-                for (String string : bestEdgeCombination) {
+                for (String string : bestCombination) {
                     currentBestcombination.add(string);
                 }
+
                 allBestCombinations.add(currentBestcombination);
-                bestTraffic.add(trafficCombination);
+                bestTraffic.add(minCombination);
 
                 currentCombination = 0;
-                bestEdgeCombination = new LinkedList<>();
-                edgeMin = Double.MAX_VALUE;
-                bestEdgeCombination = new LinkedList<>();
-                trafficCombination = 0.0;
+                minCombination = Integer.MAX_VALUE;
+                bestCombination = new LinkedList<>();
+
+                checkAllCopiesUsed(graph,
+                        trafficStore,
+                        stateStore,
+                        dependencies,
+                        dist,
+                        currentBestcombination);
 
             }
+
         }
 
         System.out.println(allBestCombinations.toString());
         System.out.println(bestTraffic.toString());
+
+
 
 
 
@@ -262,8 +258,7 @@ public class BruteForceStateDependencyStateSync2 {
                                          StateStore stateStore,
                                          HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
                                          ListGraph graph,
-                                         HashMap<Vertex, HashMap<Vertex, Path>> allPaths,
-                                         HashMap<Edge, Double> edgeUsage,
+                                         HashMap<Vertex, HashMap<Vertex, Integer>> dist,
                                          boolean copiesLimited,
                                          int numStatesPerSwitch,
                                          int assignmentLine,
@@ -295,11 +290,12 @@ public class BruteForceStateDependencyStateSync2 {
                 }
             }
 
-            edgeUsage.keySet().forEach(edge -> edgeUsage.put(edge, 0.0));
 
-            double traffic = 0;
+
+            double combinationTraffic = 0;
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
+                int pathSize = 0;
                 LinkedList<StateVariable> currentDep = dependencies.get(trafficDemand);
                 Vertex currentSrc = trafficDemand.getSource();
 
@@ -316,14 +312,7 @@ public class BruteForceStateDependencyStateSync2 {
 
                         if(splittedVariable.equals(stateVariable)){
                             Vertex currentDst = graph.getVertex(Integer.parseInt(splitted[1]));
-                            //int statePathSize = dist.get(currentSrc).get(currentDst);
-
-                            int statePathSize;
-
-                            if(!currentSrc.equals(currentDst))
-                                statePathSize = allPaths.get(currentSrc).get(currentDst).getSize();
-                            else
-                                statePathSize=0;
+                            int statePathSize = dist.get(currentSrc).get(currentDst);
 
                             if(statePathSize < minStatePathSize){
                                 minStatePathSize = statePathSize;
@@ -332,58 +321,19 @@ public class BruteForceStateDependencyStateSync2 {
                         }
                     }
 
-                    traffic += trafficDemand.getDemand()*minStatePathSize;
+                    pathSize = pathSize + minStatePathSize;
 
                     String[] splitted = minStateCopy.split(",");
-
-                    Vertex currentDst = graph.getVertex(Integer.parseInt(splitted[1]));
-                    if(!currentSrc.equals(currentDst))
-                        for (Edge edge : allPaths.get(currentSrc).get(currentDst).getEdges()) {
-                            double temp = edgeUsage.get(edge);
-                            temp += trafficDemand.getDemand();
-                            edgeUsage.put(edge, temp);
-                        }
-
                     currentSrc = graph.getVertex(Integer.parseInt(splitted[1]));
                 }
 
                 Vertex currentDst = trafficDemand.getDestination();
-
-                if(!currentSrc.equals(currentDst)) {
-                    traffic += trafficDemand.getDemand() * allPaths.get(currentSrc).get(currentDst).getSize();
-                    for (Edge edge : allPaths.get(currentSrc).get(currentDst).getEdges()) {
-                        double temp = edgeUsage.get(edge);
-                        temp += trafficDemand.getDemand();
-                        edgeUsage.put(edge, temp);
-                    }
-                }
-
+                pathSize = pathSize + dist.get(currentSrc).get(currentDst);
+                combinationTraffic = combinationTraffic + pathSize;
             }
 
-            if(stateSyncRequired) {
-                updateSyncTraffic(graph, stateStore, buildup, allPaths, stateSyncInfo, edgeUsage);
-            }
-
-            /**
-               Get edge with maximum usage
-             */
-            double currentEdgeMax = Double.MIN_VALUE;
-            for (Edge edge : edgeUsage.keySet()) {
-                if(edgeUsage.get(edge)>currentEdgeMax)
-                    currentEdgeMax = edgeUsage.get(edge);
-            }
-
-            /**
-             * Compare most congested edge with global minimum
-             */
-            if(currentEdgeMax<edgeMin){
-                bestEdgeCombination = new LinkedList<>();
-                for(String string: buildup){
-                    bestEdgeCombination.add(string);
-                }
-                edgeMin = currentEdgeMax;
-                trafficCombination = traffic;
-            }
+            if(stateSyncRequired)
+                combinationTraffic += alpha*getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
 
             if(((currentCombination/numCombinations)*100.0)%20 ==0){
 
@@ -396,6 +346,15 @@ public class BruteForceStateDependencyStateSync2 {
             }
 
             currentCombination++;
+
+            if(combinationTraffic<minCombination){
+                bestCombination = new LinkedList<>();
+                for(String string: buildup){
+                    bestCombination.add(string);
+                }
+                minCombination = combinationTraffic;
+            }
+
         }
         else{
             for(LinkedList<String> linkedList : stateCombinations.get(stateVariables.get(currentLevel))){
@@ -412,8 +371,7 @@ public class BruteForceStateDependencyStateSync2 {
                         stateStore,
                         dependencies,
                         graph,
-                        allPaths,
-                        edgeUsage,
+                        dist,
                         copiesLimited,
                         numStatesPerSwitch,
                         assignmentLine,
@@ -448,12 +406,13 @@ public class BruteForceStateDependencyStateSync2 {
         return stateSyncInfo;
     }
 
-    private static void updateSyncTraffic(ListGraph graph,
-                                          StateStore stateStore,
-                                          LinkedList<String> buildup,
-                                          HashMap<Vertex, HashMap<Vertex, Path>> allPaths,
-                                          HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo,
-                                          HashMap<Edge, Double> edgeUsage){
+    private static int getSyncTraffic(ListGraph graph,
+                               StateStore stateStore,
+                               LinkedList<String> buildup,
+                               HashMap<Vertex, HashMap<Vertex, Integer>> dist,
+                               HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo){
+
+        int syncTraffic = 0;
 
         for(StateVariable stateVariable : stateStore.getStateVariables()){
 
@@ -469,43 +428,105 @@ public class BruteForceStateDependencyStateSync2 {
                     locations.add(graph.getVertex(Integer.parseInt(splitted[1])));
             }
 
-            if (locations.size()==1)
+            if(locations.size()==1)
                 continue;
 
             LinkedList<LinkedList<Integer>> combinations = stateSyncInfo.get(stateVariable);
 
             for(LinkedList<Integer> combination: combinations){
                 try {
-                    Vertex left = locations.get(combination.get(0) - 1);
-                    Vertex right = locations.get(combination.get(1) - 1);
-
-                /*
-                Left to right
-                 */
-
-                    for (Edge edge : allPaths.get(left).get(right).getEdges()) {
-                        double temp = edgeUsage.get(edge);
-                        temp += alpha;
-                        edgeUsage.put(edge, temp);
-                    }
-
-                /*
-                Right to left
-                 */
-
-                    for (Edge edge : allPaths.get(right).get(left).getEdges()) {
-                        double temp = edgeUsage.get(edge);
-                        temp += alpha;
-                        edgeUsage.put(edge, temp);
-                    }
+                    syncTraffic +=
+                            dist.get(locations.get(combination.get(0) - 1)).get(locations.get(combination.get(1) - 1));
+                    syncTraffic +=
+                            dist.get(locations.get(combination.get(1) - 1)).get(locations.get(combination.get(0) - 1));
                 }
                 catch(IndexOutOfBoundsException e){
-                    System.out.println(buildup);
+                    //
+                }
+
+            }
+        }
+
+
+        return syncTraffic;
+
+    }
+
+    private static boolean checkAllCopiesUsed(ListGraph graph,
+                                              TrafficStore trafficStore,
+                                              StateStore stateStore,
+                                              HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
+                                              HashMap<Vertex, HashMap<Vertex, Integer>> dist,
+                                              LinkedList<String> buildup){
+
+        boolean allUsed = false;
+        HashMap<StateCopy, Boolean> stateUsage = new HashMap<>();
+
+        for(StateVariable stateVariable : stateStore.getStateVariables()){
+            LinkedList<StateCopy> stateCopies = stateStore.getStateCopies(stateVariable);
+
+            int i=0;
+            for(String string : buildup){
+
+                String[] splitted = string.split(",");
+                StateVariable splittedVariable = stateStore.getStateVariable(splitted[0]);
+
+                if(splittedVariable.equals(stateVariable)){
+                    stateCopies.get(i).setVertex(graph.getVertex(Integer.parseInt(splitted[1])));
+                    stateUsage.put(stateCopies.get(i), false);
+                    i++;
                 }
             }
         }
-    }
 
+        for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+
+            LinkedList<StateVariable> currentDep = dependencies.get(trafficDemand);
+            Vertex currentSrc = trafficDemand.getSource();
+
+            for(int i=0 ; i<currentDep.size() ; i++){
+                StateVariable stateVariable = currentDep.get(i);
+
+                int minStatePathSize = Integer.MAX_VALUE;
+                String minStateCopy = null;
+
+                for(String string : buildup){
+
+                    String[] splitted = string.split(",");
+                    StateVariable splittedVariable = stateStore.getStateVariable(splitted[0]);
+
+                    if(splittedVariable.equals(stateVariable)){
+                        Vertex currentDst = graph.getVertex(Integer.parseInt(splitted[1]));
+                        int statePathSize = dist.get(currentSrc).get(currentDst);
+
+                        if(statePathSize < minStatePathSize){
+                            minStatePathSize = statePathSize;
+                            minStateCopy = string;
+                        }
+                    }
+                }
+
+
+                String[] splitted = minStateCopy.split(",");
+                currentSrc = graph.getVertex(Integer.parseInt(splitted[1]));
+            }
+
+            boolean currentAllUsed = true;
+            for(StateCopy stateCopy : stateUsage.keySet()){
+                if(!stateUsage.get(stateCopy)){
+                    currentAllUsed = false;
+                }
+                break;
+            }
+
+            if(currentAllUsed) {
+                allUsed = true;
+                break;
+            }
+        }
+
+        return allUsed;
+    }
 
 
 
