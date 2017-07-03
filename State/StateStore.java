@@ -2,6 +2,7 @@ package statefulsharding.State;
 
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficStore;
+import statefulsharding.graph.Vertex;
 
 import java.io.*;
 import java.util.HashMap;
@@ -128,6 +129,21 @@ public class StateStore {
         }
 
         return stateCopy;
+    }
+
+    public StateCopy getStateCopy(StateVariable targetVariable, Vertex vertex){
+
+        for(StateVariable stateVariable : stateVariables){
+            if(stateVariable.equals(targetVariable)){
+                if(stateCopies.get(stateVariable)!=null) {
+                    for (StateCopy copy : stateCopies.get(stateVariable))
+                        if (copy.getVertex().equals(vertex))
+                            return copy;
+                }
+            }
+        }
+
+        return null;
     }
 
     public boolean checkStateVariable(String string){

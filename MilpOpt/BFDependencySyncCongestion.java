@@ -1,6 +1,7 @@
 package statefulsharding.MilpOpt;
 
 import statefulsharding.State.GenerateStates;
+import statefulsharding.State.StateCopy;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
 import statefulsharding.Traffic.TrafficDemand;
@@ -50,9 +51,9 @@ public class BFDependencySyncCongestion {
          * Generate Graph
          */
 
-        boolean copySameSwitchAllowed = true;
+        boolean copySameSwitchAllowed = false;
         int capacity = Integer.MAX_VALUE;
-        int size = 8;
+        int size = 7;
         int trafficNo = 1;
         int depSize = 1;
         int depRun = 1;
@@ -62,7 +63,7 @@ public class BFDependencySyncCongestion {
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{1,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{3,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -94,6 +95,9 @@ public class BFDependencySyncCongestion {
                 }
             }
         }
+
+        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                ShortestPath.FloydWarshall(graph, false, null);
 
         /**
          * Traffic utilization per edge
@@ -168,6 +172,8 @@ public class BFDependencySyncCongestion {
 
         LinkedList<LinkedList<String>> allBestCombinations = new LinkedList<>();
         LinkedList<Double> bestTraffic = new LinkedList<>();
+        LinkedList<Boolean> used = new LinkedList<>();
+        LinkedList<Integer> numLocationsUsed = new LinkedList<>();
 
         for(trafficNo = trafficStart ; trafficNo<=trafficEnd ; trafficNo++) {
 
@@ -247,11 +253,22 @@ public class BFDependencySyncCongestion {
                 bestEdgeCombination = new LinkedList<>();
                 trafficCombination = 0.0;
 
+                used.add(checkAllCopiesUsed(graph,
+                        trafficStore,
+                        stateStore,
+                        dependencies,
+                        dist,
+                        currentBestcombination));
+
+                numLocationsUsed.add(currentBestcombination.size());
+
             }
         }
 
         System.out.println(allBestCombinations.toString());
         System.out.println(bestTraffic.toString());
+        System.out.println("allCopiesUsed: " + used.toString());
+        System.out.println("LocationsUsed: " + numLocationsUsed.toString());
 
 
 
@@ -509,6 +526,80 @@ public class BFDependencySyncCongestion {
                 }
             }
         }
+    }
+
+    private static boolean checkAllCopiesUsed(ListGraph graph,
+                                              TrafficStore trafficStore,
+                                              StateStore stateStore,
+                                              HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
+                                              HashMap<Vertex, HashMap<Vertex, Integer>> dist,
+                                              LinkedList<String> buildup){
+
+        HashMap<StateCopy, Boolean> stateUsage = new HashMap<>();
+
+        for(StateVariable stateVariable : stateStore.getStateVariables()){
+            LinkedList<StateCopy> stateCopies = stateStore.getStateCopies(stateVariable);
+
+            int i=0;
+            for(String string : buildup){
+
+                String[] splitted = string.split(",");
+                StateVariable splittedVariable = stateStore.getStateVariable(splitted[0]);
+
+                if(splittedVariable.equals(stateVariable)){
+                    stateCopies.get(i).setVertex(graph.getVertex(Integer.parseInt(splitted[1])));
+                    stateUsage.put(stateCopies.get(i), false);
+                    i++;
+                }
+            }
+        }
+
+        for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+
+            LinkedList<StateVariable> currentDep = dependencies.get(trafficDemand);
+            Vertex currentSrc = trafficDemand.getSource();
+
+            for(int i=0 ; i<currentDep.size() ; i++){
+                StateVariable stateVariable = currentDep.get(i);
+
+                int minStatePathSize = Integer.MAX_VALUE;
+                String minStateCopy = null;
+
+                for(String string : buildup){
+
+                    String[] splitted = string.split(",");
+                    StateVariable splittedVariable = stateStore.getStateVariable(splitted[0]);
+
+                    if(splittedVariable.equals(stateVariable)){
+                        Vertex currentDst = graph.getVertex(Integer.parseInt(splitted[1]));
+                        int statePathSize = dist.get(currentSrc).get(currentDst);
+
+                        if(statePathSize < minStatePathSize){
+                            minStatePathSize = statePathSize;
+                            minStateCopy = string;
+                        }
+                    }
+                }
+
+
+                String[] splitted = minStateCopy.split(",");
+                currentSrc = graph.getVertex(Integer.parseInt(splitted[1]));
+                stateUsage.put(stateStore.getStateCopy(stateVariable, currentSrc), true);
+            }
+
+            boolean currentAllUsed = true;
+            for(StateCopy stateCopy : stateUsage.keySet()){
+                if(!stateUsage.get(stateCopy)){
+                    currentAllUsed = false;
+                }
+            }
+
+            if(currentAllUsed) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 

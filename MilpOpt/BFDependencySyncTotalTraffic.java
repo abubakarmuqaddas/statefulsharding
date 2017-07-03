@@ -59,7 +59,7 @@ public class BFDependencySyncTotalTraffic {
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{2,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{4,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -86,6 +86,8 @@ public class BFDependencySyncTotalTraffic {
 
         LinkedList<LinkedList<String>> allBestCombinations = new LinkedList<>();
         LinkedList<Double> bestTraffic = new LinkedList<>();
+        LinkedList<Boolean> used = new LinkedList<>();
+        LinkedList<Integer> numLocationsUsed = new LinkedList<>();
 
         /**
          * Generate states and numCopies
@@ -228,12 +230,14 @@ public class BFDependencySyncTotalTraffic {
                 minCombination = Integer.MAX_VALUE;
                 bestCombination = new LinkedList<>();
 
-                checkAllCopiesUsed(graph,
+                used.add(checkAllCopiesUsed(graph,
                         trafficStore,
                         stateStore,
                         dependencies,
                         dist,
-                        currentBestcombination);
+                        currentBestcombination));
+
+                numLocationsUsed.add(currentBestcombination.size());
 
             }
 
@@ -241,6 +245,9 @@ public class BFDependencySyncTotalTraffic {
 
         System.out.println(allBestCombinations.toString());
         System.out.println(bestTraffic.toString());
+        System.out.println("allCopiesUsed: " + used.toString());
+        System.out.println("LocationsUsed: " + numLocationsUsed.toString());
+
 
 
 
@@ -459,7 +466,6 @@ public class BFDependencySyncTotalTraffic {
                                               HashMap<Vertex, HashMap<Vertex, Integer>> dist,
                                               LinkedList<String> buildup){
 
-        boolean allUsed = false;
         HashMap<StateCopy, Boolean> stateUsage = new HashMap<>();
 
         for(StateVariable stateVariable : stateStore.getStateVariables()){
@@ -509,6 +515,7 @@ public class BFDependencySyncTotalTraffic {
 
                 String[] splitted = minStateCopy.split(",");
                 currentSrc = graph.getVertex(Integer.parseInt(splitted[1]));
+                stateUsage.put(stateStore.getStateCopy(stateVariable, currentSrc), true);
             }
 
             boolean currentAllUsed = true;
@@ -516,16 +523,14 @@ public class BFDependencySyncTotalTraffic {
                 if(!stateUsage.get(stateCopy)){
                     currentAllUsed = false;
                 }
-                break;
             }
 
             if(currentAllUsed) {
-                allUsed = true;
-                break;
+                return true;
             }
         }
 
-        return allUsed;
+        return false;
     }
 
 
