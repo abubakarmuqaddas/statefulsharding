@@ -58,7 +58,7 @@ public class BFDependencySyncCongestion {
         int depSize = 1;
         int depRun = 1;
         int trafficStart = 1;
-        int trafficEnd = 10;
+        int trafficEnd = 1;
         int assignmentLineStart = 1;
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;

@@ -49,7 +49,7 @@ public class BFDependencySyncTotalTraffic {
 
         boolean copySameSwitchAllowed = true;
         int capacity = Integer.MAX_VALUE;
-        int size = 7;
+        int size = 5;
         int trafficNo = 1;
         int depSize = 1;
         int depRun = 1;
@@ -59,7 +59,7 @@ public class BFDependencySyncTotalTraffic {
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{4,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{1,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -342,7 +342,7 @@ public class BFDependencySyncTotalTraffic {
             if(stateSyncRequired)
                 combinationTraffic += alpha*getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
 
-            if(((currentCombination/numCombinations)*100.0)%20 ==0){
+            if(currentCombination%10000 ==0){
 
                 double pCent = Math.round(((double) currentCombination / numCombinations) * 100000000) / 1000000.0;
 
