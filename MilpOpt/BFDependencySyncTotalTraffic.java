@@ -31,14 +31,16 @@ public class BFDependencySyncTotalTraffic {
     private static LinkedList<String> bestCombination;
     private static double alpha;
     private static boolean stateSyncRequired;
+    private static double bestSyncTraffic;
 
     static {
         numCombinations = 1;
         currentCombination = 0;
         minCombination = Double.MAX_VALUE;
         bestCombination = new LinkedList<>();
-        alpha=0.1;
+        alpha=10;
         stateSyncRequired = true;
+        bestSyncTraffic = 0;
     }
 
     public static void main(String[] args) {
@@ -48,18 +50,20 @@ public class BFDependencySyncTotalTraffic {
          */
 
         boolean copySameSwitchAllowed = true;
+        double alphaStart = 0;
+        double alphaEnd = 6;
         int capacity = Integer.MAX_VALUE;
         int size = 5;
         int trafficNo = 1;
         int depSize = 1;
         int depRun = 1;
         int trafficStart = 1;
-        int trafficEnd = 10;
+        int trafficEnd = 1;
         int assignmentLineStart = 1;
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{1,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{4,1,1,1,1,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -86,6 +90,7 @@ public class BFDependencySyncTotalTraffic {
 
         LinkedList<LinkedList<String>> allBestCombinations = new LinkedList<>();
         LinkedList<Double> bestTraffic = new LinkedList<>();
+        LinkedList<Double> syncTraffic = new LinkedList<>();
         LinkedList<Boolean> used = new LinkedList<>();
         LinkedList<Integer> numLocationsUsed = new LinkedList<>();
 
@@ -115,7 +120,8 @@ public class BFDependencySyncTotalTraffic {
 
             if (copySameSwitchAllowed) {
                 result = getNCombinations.getPermutations(stateVariable.getCopies(), graph.getVerticesInt());
-            } else {
+            }
+            else {
                 result = getNCombinations.getCombinations(graph.getVerticesInt(), stateVariable.getCopies());
             }
 
@@ -175,69 +181,74 @@ public class BFDependencySyncTotalTraffic {
             String trafficAssignmentFile = initial + "Size_TfcNo_NumStates_DependencyNo/"
                     + size + "_" + trafficNo + "_" + numStates + "_" + depRun + ".txt";
 
-            for (int assignmentLine = assignmentLineStart; assignmentLine <= assignmentLineFinish;
-                 assignmentLine++) {
+            for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + 0.2) {
 
-                HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies =
-                        StateStore.assignStates2Traffic(trafficStore, allDependencies,
-                                trafficAssignmentFile, assignmentLine);
+                for (int assignmentLine = assignmentLineStart; assignmentLine <= assignmentLineFinish;
+                     assignmentLine++) {
+
+                    HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies =
+                            StateStore.assignStates2Traffic(trafficStore, allDependencies,
+                                    trafficAssignmentFile, assignmentLine);
 
 
-                System.out.println();
-                dependencies.forEach((trafficDemand, states) -> {
-                    System.out.println(trafficDemand.getSource().getLabel() + " -> " +
-                            trafficDemand.getDestination().getLabel());
-                    System.out.print("Var: ");
-                    states.forEach(stateVariable -> {
-                        System.out.print(stateVariable.getLabel() + " ");
+                    System.out.println();
+                    dependencies.forEach((trafficDemand, states) -> {
+                        System.out.println(trafficDemand.getSource().getLabel() + " -> " +
+                                trafficDemand.getDestination().getLabel());
+                        System.out.print("Var: ");
+                        states.forEach(stateVariable -> {
+                            System.out.print(stateVariable.getLabel() + " ");
+                        });
+                        System.out.println();
+                        System.out.println();
                     });
-                    System.out.println();
-                    System.out.println();
-                });
 
-                HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo =
-                        getStateSyncInfo(stateStore);
+                    HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo =
+                            getStateSyncInfo(stateStore);
 
-                CartesianProduct(stateCopyCombinations,
-                        numStates,
-                        stateVariables,
-                        0,
-                        new LinkedList<>(),
-                        trafficStore,
-                        stateStore,
-                        dependencies,
-                        graph,
-                        dist,
-                        copiesLimited,
-                        numStatesPerSwitch,
-                        assignmentLine,
-                        stateSyncInfo);
+                    CartesianProduct(stateCopyCombinations,
+                            numStates,
+                            stateVariables,
+                            0,
+                            new LinkedList<>(),
+                            trafficStore,
+                            stateStore,
+                            dependencies,
+                            graph,
+                            dist,
+                            copiesLimited,
+                            numStatesPerSwitch,
+                            assignmentLine,
+                            stateSyncInfo);
 
 
-                System.out.println("Best combination traffic: " + minCombination);
+                    System.out.println("Best combination traffic: " + minCombination);
 
-                System.out.println(bestCombination);
+                    System.out.println(bestCombination);
 
-                LinkedList<String> currentBestcombination = new LinkedList<>();
-                for (String string : bestCombination) {
-                    currentBestcombination.add(string);
+                    LinkedList<String> currentBestcombination = new LinkedList<>();
+                    for (String string : bestCombination) {
+                        currentBestcombination.add(string);
+                    }
+
+                    allBestCombinations.add(currentBestcombination);
+                    bestTraffic.add(Math.round(minCombination * 100.0) / 100.0);
+                    syncTraffic.add(Math.round(bestSyncTraffic * 100.0) / 100.0);
+
+                    currentCombination = 0;
+                    minCombination = Integer.MAX_VALUE;
+                    bestCombination = new LinkedList<>();
+
+                    used.add(checkAllCopiesUsed(graph,
+                            trafficStore,
+                            stateStore,
+                            dependencies,
+                            dist,
+                            currentBestcombination));
+
+                    numLocationsUsed.add(currentBestcombination.size());
+
                 }
-
-                allBestCombinations.add(currentBestcombination);
-                bestTraffic.add(minCombination);
-
-                currentCombination = 0;
-                minCombination = Integer.MAX_VALUE;
-                bestCombination = new LinkedList<>();
-
-                used.add(checkAllCopiesUsed(graph,
-                        trafficStore,
-                        stateStore,
-                        dependencies,
-                        dist,
-                        currentBestcombination));
-
-                numLocationsUsed.add(currentBestcombination.size());
 
             }
 
@@ -245,14 +256,20 @@ public class BFDependencySyncTotalTraffic {
 
         System.out.println(allBestCombinations.toString());
         System.out.println(bestTraffic.toString());
+        System.out.println(syncTraffic.toString());
         System.out.println("allCopiesUsed: " + used.toString());
         System.out.println("LocationsUsed: " + numLocationsUsed.toString());
 
-
-
-
-
-
+        double currentAlpha = 0;
+        System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
+        for(int i=0 ; i<bestTraffic.size() ; i++){
+            System.out.println(Math.round(currentAlpha*100)/100.0 + " "
+                    + Math.round(bestTraffic.get(i)*100.0/graph.getVertices().size())/100.0 + " "
+                    + Math.round((bestTraffic.get(i)-syncTraffic.get(i))*100.0/graph.getVertices().size())/100.0 + " "
+                    + Math.round(syncTraffic.get(i)*100.0/graph.getVertices().size())/100.0 + " " +
+                    numLocationsUsed.get(i));
+            currentAlpha+=0.2;
+        }
 
     }
 
@@ -299,7 +316,10 @@ public class BFDependencySyncTotalTraffic {
 
 
 
+
             double combinationTraffic = 0;
+            double syncTraffic = 0;
+            double dataTraffic = 0;
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
                 int pathSize = 0;
@@ -339,8 +359,10 @@ public class BFDependencySyncTotalTraffic {
                 combinationTraffic = combinationTraffic + pathSize;
             }
 
-            if(stateSyncRequired)
-                combinationTraffic += alpha*getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
+            if(stateSyncRequired) {
+                syncTraffic = alpha * getSyncTraffic(graph, stateStore, buildup, dist, stateSyncInfo);
+                combinationTraffic += syncTraffic;
+            }
 
             if(currentCombination%10000 ==0){
 
@@ -360,6 +382,7 @@ public class BFDependencySyncTotalTraffic {
                     bestCombination.add(string);
                 }
                 minCombination = combinationTraffic;
+                bestSyncTraffic = syncTraffic;
             }
 
         }
