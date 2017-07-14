@@ -1,7 +1,7 @@
 package statefulsharding.randomgraphgen;
 
 import statefulsharding.MilpOpt.OptimizationOptions;
-import statefulsharding.MilpOpt.ShardedSNAPDependency2;
+import statefulsharding.MilpOpt.ShardedSNAPDependency;
 import statefulsharding.State.GenerateStates;
 import statefulsharding.State.StateStore;
 import statefulsharding.State.StateVariable;
@@ -173,7 +173,7 @@ public class RandomGraphDemo {
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
-        ShardedSNAPDependency2 shardedSNAPDependency = new ShardedSNAPDependency2(graph,
+        ShardedSNAPDependency shardedSNAPDependency = new ShardedSNAPDependency(graph,
                                                                                 trafficStore,
                                                                                 dependencies,
                                                                                 optimizationOptions,

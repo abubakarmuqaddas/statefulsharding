@@ -12,16 +12,14 @@ import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.Edge;
 import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
+import statefulsharding.graph.algorithms.getNCombinations;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by root on 5/23/17.
- */
-public class ShardedSNAPDependency2 {
+public class ShardedDependencyMinCongestionStateSync {
 
     private ListGraph graph;
     private TrafficStore trafficStore;
@@ -37,23 +35,29 @@ public class ShardedSNAPDependency2 {
             HashMap<StateCopy, HashMap<Edge, IloNumVar>>>> PTracker;
     private HashMap<TrafficDemand, HashMap<List<StateCopy>,
             HashMap<StateCopy, HashMap<Vertex, IloNumVar>>>> Y;
+    private HashMap<LinkedList<StateCopy>, HashMap<Edge, IloNumVar>> StateSyncFlows;
+    private double alpha;
 
-    public ShardedSNAPDependency2(ListGraph graph, TrafficStore trafficStore,
-                                  HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
-                                  OptimizationOptions options,
-                                  StateStore stateStore){
+
+    public ShardedDependencyMinCongestionStateSync(ListGraph graph, TrafficStore trafficStore,
+                                                   HashMap<TrafficDemand, LinkedList<StateVariable>> dependencies,
+                                                   OptimizationOptions options,
+                                                   StateStore stateStore,
+                                                   double alpha){
 
         this.graph = graph;
         this.trafficStore = trafficStore;
         this.optimizationOptions = options;
         this.dependencies = dependencies;
         this.stateStore = stateStore;
+        this.alpha = alpha;
         Flows = new HashMap<>();
         Placement = new HashMap<>();
         combinations = new HashMap<>();
         PTracker = new HashMap<>();
         X = new HashMap<>();
         Y = new HashMap<>();
+        StateSyncFlows = new HashMap<>();
 
         try {
             this.cplex = new IloCplex();
@@ -239,6 +243,60 @@ public class ShardedSNAPDependency2 {
                                             + vertex.getLabel())
                                     );
                         }
+                    }
+                }
+            }
+
+            /**
+             *
+             * Defining StateSync Flows
+             *
+             * R_{state_{c_1}state_{c_2}_ij}
+             *
+             */
+
+            for (StateVariable stateVariable : stateStore.getStateVariables()){
+
+                if(!(stateVariable.getCopies()>1))
+                    continue;
+
+                LinkedList<Integer> temp = new LinkedList<>();
+
+                for(int i=1 ; i<=stateVariable.getCopies() ; i++){
+                    temp.add(i);
+                }
+
+                LinkedList<LinkedList<Integer>> comb = getNCombinations.getCombinations(temp, 2);
+
+                for(LinkedList<Integer> combLeftRight : comb){
+
+                    /**
+                     * Left to right c_a --> c_b
+                     */
+
+                    LinkedList<StateCopy> leftRight = new LinkedList<>();
+                    leftRight.add(stateStore.getStateCopy(stateVariable, combLeftRight.get(0)));
+                    leftRight.add(stateStore.getStateCopy(stateVariable, combLeftRight.get(1)));
+                    StateSyncFlows.put(leftRight, new HashMap<>());
+
+                    /**
+                     * Right to left c_b --> c_a
+                     */
+                    LinkedList<StateCopy> rightLeft = new LinkedList<>();
+                    rightLeft.add(stateStore.getStateCopy(stateVariable, combLeftRight.get(1)));
+                    rightLeft.add(stateStore.getStateCopy(stateVariable, combLeftRight.get(0)));
+                    StateSyncFlows.put(rightLeft, new HashMap<>());
+
+                    for(Edge edge : graph.getallEdges()){
+                        StateSyncFlows.get(leftRight).put(edge, cplex.boolVar("Rcij_" +
+                                StateCopyCombinationToString(leftRight)+ "_" +
+                                edge.getSource().getLabel() + "_" +
+                                edge.getDestination().getLabel()));
+
+                        StateSyncFlows.get(rightLeft).put(edge, cplex.boolVar("Rcij_" +
+                                StateCopyCombinationToString(rightLeft)+ "_" +
+                                edge.getSource().getLabel() + "_" +
+                                edge.getDestination().getLabel()));
                     }
                 }
             }
@@ -899,6 +957,167 @@ public class ShardedSNAPDependency2 {
                 }
             }
 
+            /**
+             * All constraints related to state synchronization flows!
+             */
+
+            HashMap<List<StateCopy>, HashMap<Vertex, IloLinearNumExpr>> outStateSyncFlows = new HashMap<>();
+            HashMap<List<StateCopy>, HashMap<Vertex, IloLinearNumExpr>> inStateSyncFlows = new HashMap<>();
+
+            /**
+             *  Initialize all in and out state sync flows at all nodes
+             *
+             *  out: \sum_j R_{state_{c_1} state{c_2} nj}
+             *  in:  \sum_j R_{state_{c_1} state{c_2} in}
+             *
+             */
+
+            for(LinkedList<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                outStateSyncFlows.put(stateCopies, new HashMap<>());
+                inStateSyncFlows.put(stateCopies, new HashMap<>());
+
+                for(Vertex vertex : graph.getVertices()){
+                    outStateSyncFlows.get(stateCopies).putIfAbsent(vertex, cplex.linearNumExpr());
+
+                    for(Vertex successor : graph.getSuccessors(vertex)){
+
+                        outStateSyncFlows
+                                .get(stateCopies)
+                                .get(vertex)
+                                .addTerm(1.0, StateSyncFlows
+                                        .get(stateCopies)
+                                        .get(graph.getEdge(vertex, successor))
+                                );
+                    }
+
+                    inStateSyncFlows.get(stateCopies).putIfAbsent(vertex, cplex.linearNumExpr());
+
+                    for(Vertex predecessor : graph.getPredecessors(vertex)){
+                        inStateSyncFlows
+                                .get(stateCopies)
+                                .get(vertex)
+                                .addTerm(1.0, StateSyncFlows
+                                        .get(stateCopies)
+                                        .get(graph.getEdge(predecessor, vertex))
+                                );
+                    }
+                }
+            }
+
+            /** (1)
+             * in + Pc1 <= 1
+             */
+
+            int i=0;
+            for(List<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                for(Vertex vertex : graph.getVertices()){
+
+                    cplex.addLe(
+                            cplex.sum(
+                                    inStateSyncFlows.get(stateCopies).get(vertex),
+                                    Placement.get(vertex).get(stateCopies.get(0))
+                            ),
+                            1.0,
+                            "stateSync_1_" + i++
+                    );
+
+                }
+            }
+
+            /** (2)
+             * out + Pc2 >= in
+             */
+
+            i=0;
+            for(List<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                for(Vertex vertex : graph.getVertices()){
+
+                    cplex.addGe(
+                            cplex.sum(
+                                    outStateSyncFlows.get(stateCopies).get(vertex),
+                                    Placement.get(vertex).get(stateCopies.get(1))
+                            ),
+                            inStateSyncFlows.get(stateCopies).get(vertex),
+                            "stateSync_2_" + i++
+                    );
+
+                }
+            }
+
+            /** (3)
+             * out + Pc2 <= 1
+             */
+
+            i=0;
+            for(List<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                for(Vertex vertex : graph.getVertices()){
+
+                    cplex.addLe(
+                            cplex.sum(
+                                    outStateSyncFlows.get(stateCopies).get(vertex),
+                                    Placement.get(vertex).get(stateCopies.get(1))
+                            ),
+                            1.0,
+                            "stateSync_3_" + i++
+                    );
+
+                }
+            }
+
+            /** (4)
+             * in + Pc1 >= out
+             */
+
+            i=0;
+            for(List<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                for(Vertex vertex : graph.getVertices()){
+
+                    cplex.addGe(
+                            cplex.sum(
+                                    inStateSyncFlows.get(stateCopies).get(vertex),
+                                    Placement.get(vertex).get(stateCopies.get(0))
+                            ),
+                            outStateSyncFlows.get(stateCopies).get(vertex),
+                            "stateSync_4_" + i++
+                    );
+
+                }
+            }
+
+            /** (5)
+             * out >= Pc1
+             */
+
+            i=0;
+            for(List<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                for(Vertex vertex : graph.getVertices()){
+
+                    cplex.addGe(
+                            outStateSyncFlows.get(stateCopies).get(vertex),
+                            Placement.get(vertex).get(stateCopies.get(0)),
+                            "stateSync_5_" + i++
+                    );
+
+                }
+            }
+
+            /** (6)
+             * in >= Pc2
+             */
+
+            i=0;
+            for(List<StateCopy> stateCopies : StateSyncFlows.keySet()){
+                for(Vertex vertex : graph.getVertices()){
+
+                    cplex.addGe(
+                            inStateSyncFlows.get(stateCopies).get(vertex),
+                            Placement.get(vertex).get(stateCopies.get(1)),
+                            "stateSync_6_" + i++
+                    );
+
+                }
+            }
+
             if (fixConstraints)
                 FixVariables();
 
@@ -924,6 +1143,15 @@ public class ShardedSNAPDependency2 {
                     }
                 }
             }
+
+            for (LinkedList<StateCopy> stateCopies : StateSyncFlows.keySet()) {
+                for (Edge edge : StateSyncFlows.get(stateCopies).keySet()) {
+                    objective.addTerm(alpha, StateSyncFlows
+                            .get(stateCopies)
+                            .get(edge));
+                }
+            }
+
             cplex.addMinimize(objective);
         }
         catch  (IloException e)  {
@@ -957,6 +1185,15 @@ public class ShardedSNAPDependency2 {
                     }
                 }
             }
+
+            for (LinkedList<StateCopy> stateCopies: StateSyncFlows.keySet()) {
+                for (Edge edge : StateSyncFlows.get(stateCopies).keySet()) {
+                    if(cplex.getValue(StateSyncFlows.get(stateCopies).get(edge)) > 0) {
+                        objectiveValue += alpha*cplex.getValue(StateSyncFlows.get(stateCopies).get(edge));
+                    }
+                }
+            }
+
         }
         catch (IloException e){
             System.err.println("Concert exception caught:"  +  e);
@@ -1058,6 +1295,22 @@ public class ShardedSNAPDependency2 {
                     }
                 }
             }
+
+            System.out.println();
+
+            for (LinkedList<StateCopy> stateCopies: StateSyncFlows.keySet()) {
+                for (Edge edge : StateSyncFlows.get(stateCopies).keySet()) {
+                    if(cplex.getValue(StateSyncFlows.get(stateCopies).get(edge)) > 0) {
+                        System.out.println("Rcij_" + StateCopyCombinationToString(stateCopies)
+                                + "_" + edge.getSource().getLabel()
+                                + "_" + edge.getDestination().getLabel() + " = " +
+                                cplex.getValue(StateSyncFlows.get(stateCopies).get(edge)));
+                    }
+                }
+                System.out.println();
+            }
+            System.out.println();
+
 
 
         }

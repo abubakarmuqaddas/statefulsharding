@@ -8,11 +8,8 @@ import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
-import statefulsharding.graph.algorithms.getNCombinations;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,7 +20,7 @@ public class TestingClass {
 
         int size = 4;
         int trafficNo = 1;
-        int dependencySize = 2;
+        int dependencySize = 1;
         int capacity = Integer.MAX_VALUE;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
@@ -44,7 +41,7 @@ public class TestingClass {
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 GenerateStates.BinaryTreeGenerator(dependencySize, stateStore);
         stateStore.setStateCopies("a",2);
-        stateStore.setStateCopies("b",2);
+        //stateStore.setStateCopies("b",2);
 
         for (LinkedList<StateVariable> dependency : allDependencies) {
             for (StateVariable stateVariable : dependency) {
@@ -82,7 +79,7 @@ public class TestingClass {
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
-        ShardedSNAPDependencyStateSync opt = new ShardedSNAPDependencyStateSync(graph,
+        ShardedDependencyMinTrafficStateSync opt = new ShardedDependencyMinTrafficStateSync(graph,
                                                                                 trafficStore,
                                                                                 dependencies,
                                                                                 optimizationOptions,
