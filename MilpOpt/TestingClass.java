@@ -79,7 +79,7 @@ public class TestingClass {
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
-        ShardedDependencyMinTrafficStateSync opt = new ShardedDependencyMinTrafficStateSync(graph,
+        ShardedDependencyMinCongestionStateSync opt = new ShardedDependencyMinCongestionStateSync(graph,
                                                                                 trafficStore,
                                                                                 dependencies,
                                                                                 optimizationOptions,

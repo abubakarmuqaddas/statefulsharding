@@ -36,6 +36,7 @@ public class ShardedDependencyMinCongestionStateSync {
     private HashMap<TrafficDemand, HashMap<List<StateCopy>,
             HashMap<StateCopy, HashMap<Vertex, IloNumVar>>>> Y;
     private HashMap<LinkedList<StateCopy>, HashMap<Edge, IloNumVar>> StateSyncFlows;
+    private HashMap<Edge, IloNumVar> FlowPerEdge;
     private double alpha;
 
 
@@ -58,6 +59,7 @@ public class ShardedDependencyMinCongestionStateSync {
         X = new HashMap<>();
         Y = new HashMap<>();
         StateSyncFlows = new HashMap<>();
+        FlowPerEdge = new HashMap<>();
 
         try {
             this.cplex = new IloCplex();
@@ -154,6 +156,20 @@ public class ShardedDependencyMinCongestionStateSync {
                                         edge.getDestination().getLabel()));
                     }
                 }
+            }
+
+            /**
+             * Defining per edge flow Rij!!
+             */
+
+            for(Edge edge : graph.getallEdges()){
+                FlowPerEdge.put(
+                        edge,
+                        cplex.numVar(0.0, Integer.MAX_VALUE,
+                                "Rij_"
+                                        + edge.getSource().getLabel() + "_"
+                                        + edge.getDestination().getLabel())
+                );
             }
 
             /**
@@ -424,12 +440,11 @@ public class ShardedDependencyMinCongestionStateSync {
             /**
              *
              * Capacity Constraint per edge
-             * \sum_c \sum_{u,v} R_{cuvij} d_{uv} \le c_{ij}
+             * \sum_c \sum_{u,v} (R_{cuvij} d_{uv} + \alpha* R{c1c2ij} \le c_{ij}
              * \forall i,j
              * \forall u \ne v
              *
              */
-
 
 
             for (Edge edge: graph.getallEdges()){
@@ -445,10 +460,45 @@ public class ShardedDependencyMinCongestionStateSync {
                                 .get(stateCopyCombination)
                                 .get(edge));
                     }
+                    for(List<StateCopy> stateCopies: StateSyncFlows.keySet()){
+                        edgeTraffic.addTerm(
+                                alpha,
+                                StateSyncFlows.get(stateCopies).get(edge)
+                        );
+                    }
 
                 }
                 cplex.addLe(edgeTraffic,edge.getCapacity());
             }
+
+            /**
+             * Rij >= \sum_c \sum_{u,v} (R_{cuvij} d_{uv} + \alpha* R{c1c2ij}
+             */
+
+            for (Edge edge: graph.getallEdges()){
+                if (edge.getSource().equals(edge.getDestination())){
+                    continue;
+                }
+                IloLinearNumExpr edgeTraffic = cplex.linearNumExpr();
+                for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+                    for (List<StateCopy> stateCopyCombination : combinations.get(trafficDemand)) {
+                        edgeTraffic.addTerm(trafficDemand.getDemand(),
+                                        Flows
+                                        .get(trafficDemand)
+                                        .get(stateCopyCombination)
+                                        .get(edge));
+                    }
+                    for(List<StateCopy> stateCopies: StateSyncFlows.keySet()){
+                        edgeTraffic.addTerm(
+                                alpha,
+                                StateSyncFlows.get(stateCopies).get(edge)
+                        );
+                    }
+
+                }
+                cplex.addGe(FlowPerEdge.get(edge), edgeTraffic);
+            }
+
 
 
             /**
@@ -1133,23 +1183,8 @@ public class ShardedDependencyMinCongestionStateSync {
         try {
             IloLinearNumExpr objective = cplex.linearNumExpr();
 
-            for (TrafficDemand trafficDemand : Flows.keySet()) {
-                for (List<StateCopy> stateCopyCombination : Flows.get(trafficDemand).keySet()) {
-                    for (Edge edge : Flows.get(trafficDemand).get(stateCopyCombination).keySet()) {
-                        objective.addTerm(trafficDemand.getDemand(), Flows
-                                .get(trafficDemand)
-                                .get(stateCopyCombination)
-                                .get(edge));
-                    }
-                }
-            }
-
-            for (LinkedList<StateCopy> stateCopies : StateSyncFlows.keySet()) {
-                for (Edge edge : StateSyncFlows.get(stateCopies).keySet()) {
-                    objective.addTerm(alpha, StateSyncFlows
-                            .get(stateCopies)
-                            .get(edge));
-                }
+            for(Edge edge : FlowPerEdge.keySet()){
+                objective.addTerm(1.0, FlowPerEdge.get(edge));
             }
 
             cplex.addMinimize(objective);
