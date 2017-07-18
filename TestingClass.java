@@ -1,6 +1,8 @@
 package statefulsharding;
 
+import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.algorithms.getNCombinations;
+import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.*;
 
@@ -9,19 +11,19 @@ public class TestingClass {
 
     public static void main(String[] args){
 
-        LinkedList<Integer> data = new LinkedList<>();
+        int capacity = Integer.MAX_VALUE;
+        int size = 5;
 
-        for(int i=0 ; i<9 ; i++){
-            data.add(i);
-        }
+        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
+                ManhattanGraphGen.mType.UNWRAPPED, false, true);
+        ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
-        LinkedList<LinkedList<Integer>> result = getNCombinations.getPermutations(2, data);
+        LinkedList<LinkedList<Integer>> result =
+                getNCombinations.getPermutations(7, graph.getVerticesInt());
 
-        int i=1;
-        for (LinkedList<Integer> linkedList : result) {
-            System.out.println(i++ + ": " + linkedList);
-        }
+        result.forEach(sequence -> System.out.println(sequence) );
 
+        System.out.println("Size: " + result.size());
 
 
     }

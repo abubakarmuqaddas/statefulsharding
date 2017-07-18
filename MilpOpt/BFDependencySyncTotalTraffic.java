@@ -29,7 +29,6 @@ public class BFDependencySyncTotalTraffic {
     private static long currentCombination;
     private static double minCombination;
     private static LinkedList<String> bestCombination;
-    private static double alpha;
     private static boolean stateSyncRequired;
     private static double bestSyncTraffic;
 
@@ -38,7 +37,6 @@ public class BFDependencySyncTotalTraffic {
         currentCombination = 0;
         minCombination = Double.MAX_VALUE;
         bestCombination = new LinkedList<>();
-        alpha=10;
         stateSyncRequired = true;
         bestSyncTraffic = 0;
     }
@@ -50,8 +48,10 @@ public class BFDependencySyncTotalTraffic {
          */
 
         boolean copySameSwitchAllowed = true;
+        double alpha;
         double alphaStart = 0;
-        double alphaEnd = 6;
+        double alphaEnd = 1;
+        double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
         int size = 5;
         int trafficNo = 1;
@@ -63,7 +63,7 @@ public class BFDependencySyncTotalTraffic {
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{4,1,1,1,1,1,1,1};
+        int[] numCopies = new int[]{5,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -127,14 +127,9 @@ public class BFDependencySyncTotalTraffic {
 
             stateCopyCombinations.put(stateVariable, new LinkedList<>());
             for (LinkedList<Integer> combination : result) {
-
                 LinkedList<String> temp = new LinkedList<>();
-
-
                 for (Integer integer : combination) {
-
                     String stateCopy = stateVariable.getLabel() + "," + integer;
-
                     temp.add(stateCopy);
                 }
 
@@ -181,7 +176,9 @@ public class BFDependencySyncTotalTraffic {
             String trafficAssignmentFile = initial + "Size_TfcNo_NumStates_DependencyNo/"
                     + size + "_" + trafficNo + "_" + numStates + "_" + depRun + ".txt";
 
-            for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + 0.2) {
+            for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + alphaInterval) {
+
+                System.out.println("Alpha: " + alpha);
 
                 for (int assignmentLine = assignmentLineStart; assignmentLine <= assignmentLineFinish;
                      assignmentLine++) {
@@ -190,7 +187,7 @@ public class BFDependencySyncTotalTraffic {
                             StateStore.assignStates2Traffic(trafficStore, allDependencies,
                                     trafficAssignmentFile, assignmentLine);
 
-
+                    /*
                     System.out.println();
                     dependencies.forEach((trafficDemand, states) -> {
                         System.out.println(trafficDemand.getSource().getLabel() + " -> " +
@@ -202,6 +199,7 @@ public class BFDependencySyncTotalTraffic {
                         System.out.println();
                         System.out.println();
                     });
+                    */
 
                     HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo =
                             getStateSyncInfo(stateStore);
@@ -219,7 +217,8 @@ public class BFDependencySyncTotalTraffic {
                             copiesLimited,
                             numStatesPerSwitch,
                             assignmentLine,
-                            stateSyncInfo);
+                            stateSyncInfo,
+                            alpha);
 
 
                     System.out.println("Best combination traffic: " + minCombination);
@@ -268,7 +267,7 @@ public class BFDependencySyncTotalTraffic {
                     + Math.round((bestTraffic.get(i)-syncTraffic.get(i))*100.0/graph.getVertices().size())/100.0 + " "
                     + Math.round(syncTraffic.get(i)*100.0/graph.getVertices().size())/100.0 + " " +
                     numLocationsUsed.get(i));
-            currentAlpha+=0.2;
+            currentAlpha+=alphaInterval;
         }
 
     }
@@ -286,7 +285,8 @@ public class BFDependencySyncTotalTraffic {
                                          boolean copiesLimited,
                                          int numStatesPerSwitch,
                                          int assignmentLine,
-                                         HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo){
+                                         HashMap<StateVariable, LinkedList<LinkedList<Integer>>> stateSyncInfo,
+                                         double alpha){
 
         if(currentLevel==numStates){
 
@@ -364,7 +364,7 @@ public class BFDependencySyncTotalTraffic {
                 combinationTraffic += syncTraffic;
             }
 
-            if(currentCombination%10000 ==0){
+            if(currentCombination%1000 ==0){
 
                 double pCent = Math.round(((double) currentCombination / numCombinations) * 100000000) / 1000000.0;
 
@@ -405,7 +405,8 @@ public class BFDependencySyncTotalTraffic {
                         copiesLimited,
                         numStatesPerSwitch,
                         assignmentLine,
-                        stateSyncInfo
+                        stateSyncInfo,
+                        alpha
                 );
 
                 for(String stateCopy: linkedList)
