@@ -1,5 +1,6 @@
 package statefulsharding.heuristic;
 
+import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
@@ -23,12 +24,16 @@ import static statefulsharding.heuristic.TrafficHeuristic.hType.fixedcopies;
 public class EvaluateTrafficHeuristicTabuSearch {
 
     public static void main(String[] args){
-
+        int change = 0;
         int size = 9;
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
                 ManhattanGraphGen.mType.UNWRAPPED, false, true);
         ListGraph graph = manhattanGraphGen.getManhattanGraph();
+
+
+        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                ShortestPath.FloydWarshall(graph, false, null);
 
         String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                 "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
@@ -126,22 +131,30 @@ public class EvaluateTrafficHeuristicTabuSearch {
             }
             checkedVertices.add(new ArrayList<>(sortedVertices));
 
+            double dataTraffic = 0.0;
+            for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
 
-            trafficHeuristicPart = new TrafficHeuristic(graph,
-                    trafficStore,
-                    numCopies,
-                    fixedcopies,
-                    sortedVertices,
-                    true,
-                    false);
+                Vertex source = trafficDemand.getSource();
+                Vertex destination = trafficDemand.getDestination();
 
+                int minDist = Integer.MAX_VALUE;
+
+                for(Vertex vertex : sortedVertices){
+                    if((dist.get(source).get(vertex) + dist.get(vertex).get(destination))<minDist){
+                        minDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
+                    }
+                }
+
+                dataTraffic += minDist;
+            }
 
             double syncTraffic = getSyncTraffic(numCopies, sortedVertices, graph);
-            double currentTraffic = trafficHeuristicPart.getTotalTraffic() + alpha * syncTraffic;
+            double currentTraffic = dataTraffic + alpha * syncTraffic;
 
             if(currentTraffic<=bestTraffic) {
                 bestTraffic = currentTraffic;
                 bestSoln = new ArrayList<>(sortedVertices);
+                change++;
             }
             else{
                 sortedVertices.set(targetVertexNo, targetVertex);
@@ -154,6 +167,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
         bestSoln.forEach(vertex -> System.out.print(vertex.getLabel() + " "));
         System.out.println();
         System.out.println("Final traffic: " + bestTraffic);
+        System.out.println("Changes: " + change);
 
 
     }
