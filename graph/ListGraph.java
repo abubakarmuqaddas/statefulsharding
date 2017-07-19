@@ -301,6 +301,17 @@ public class ListGraph {
         return successors;
     }
 
+    public LinkedList<Vertex> getSuccessorsList(Vertex vertex){
+
+        LinkedList<Vertex> successors = new LinkedList<>();
+
+        if (adjList.get(vertex)!=null){
+            adjList.get(vertex).forEach(edge -> successors.add(edge.getDestination()));
+        }
+
+        return successors;
+    }
+
     /**
      * Get the predecessors of a vertex (i.e. predecessor -> vertex)
      * @param vertex: Target vertex

@@ -49,11 +49,11 @@ public class BFDependencySyncTotalTraffic {
 
         boolean copySameSwitchAllowed = true;
         double alpha;
-        double alphaStart = 0;
-        double alphaEnd = 1;
+        double alphaStart = 0.2;
+        double alphaEnd = 0.2;
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
-        int size = 5;
+        int size = 9;
         int trafficNo = 1;
         int depSize = 1;
         int depRun = 1;
@@ -63,7 +63,7 @@ public class BFDependencySyncTotalTraffic {
         int assignmentLineFinish = 1;
         boolean copiesLimited = false;
         int numStatesPerSwitch = 1;
-        int[] numCopies = new int[]{5,1,1,1};
+        int[] numCopies = new int[]{3,1,1,1};
 
         String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/";
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
@@ -245,6 +245,8 @@ public class BFDependencySyncTotalTraffic {
                             dist,
                             currentBestcombination));
 
+
+
                     numLocationsUsed.add(currentBestcombination.size());
 
                 }
@@ -259,7 +261,7 @@ public class BFDependencySyncTotalTraffic {
         System.out.println("allCopiesUsed: " + used.toString());
         System.out.println("LocationsUsed: " + numLocationsUsed.toString());
 
-        double currentAlpha = 0;
+        double currentAlpha = alphaStart;
         System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
         for(int i=0 ; i<bestTraffic.size() ; i++){
             System.out.println(Math.round(currentAlpha*100)/100.0 + " "
@@ -320,6 +322,14 @@ public class BFDependencySyncTotalTraffic {
             double combinationTraffic = 0;
             double syncTraffic = 0;
             double dataTraffic = 0;
+
+            LinkedList<Integer> temp = new LinkedList<>();
+
+            for(String string : buildup){
+                String[] splitted = string.split(",");
+                temp.add(Integer.parseInt(splitted[1]));
+            }
+
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
                 int pathSize = 0;
