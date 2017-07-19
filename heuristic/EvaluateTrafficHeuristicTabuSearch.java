@@ -1,5 +1,6 @@
 package statefulsharding.heuristic;
 
+import statefulsharding.Pair;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
@@ -9,165 +10,168 @@ import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import static statefulsharding.heuristic.TrafficHeuristic.hType.fixedcopies;
 
-/**
- * Created by abubakar on 19/7/17.
- */
 public class EvaluateTrafficHeuristicTabuSearch {
 
     public static void main(String[] args){
-        int change = 0;
-        int size = 9;
 
-        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
-                ManhattanGraphGen.mType.UNWRAPPED, false, true);
-        ListGraph graph = manhattanGraphGen.getManhattanGraph();
+        int startSize = 3;
+        int finalSize = 10;
 
+        int startTraffic = 1;
+        int endTraffic = 10;
 
-        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
-                ShortestPath.FloydWarshall(graph, false, null);
+        int startCopies = 1;
+        int endCopies = 4;
 
-        String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
-                "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
-                ".csv";
+        int startPartitionRuns = 1;
+        int endPartitionRuns = 10;
 
-        int traffic = 1;
+        /* Size, trafficNo, */
+        HashMap<Integer, HashMap<Integer, Double>> TrafficShortestPath = new HashMap<>();
+        /* Size, CopyNum*/
+        HashMap<Integer, HashMap<Integer, ArrayList<Double>>>
+                TrafficPartition = new HashMap<>();
 
-        TrafficStore trafficStore = new TrafficStore();
-
-        int numCopies = 3;
-        double alpha = 0.2;
-        int tabuRunStart = 1;
-        int tabuRunFinish = 1000;
-
-        TrafficGenerator.fromFileLinebyLine(
-                graph,
-                trafficStore,
-                traffic,
-                1,
-                true,
-                trafficFile
-        );
-
-        HashMap<Vertex, ListGraph> partitions =
-                Partitioning.EvolutionaryPartition(
-                        graph,
-                        numCopies,
-                        50,
-                        "random",
-                        "betweennesstfc",
-                        trafficStore,
-                        false,
-                        false,
-                        null
-                );
-
-        ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
-        LinkedList<ArrayList<Vertex>> checkedVertices = new LinkedList<>();
-
-        TrafficHeuristic trafficHeuristicPart = new TrafficHeuristic(graph,
-                trafficStore,
-                numCopies,
-                fixedcopies,
-                sortedVertices,
-                true,
-                false);
+        for(int size = startSize ; size<=finalSize ; size++) {
 
 
-
-        checkedVertices.add(new ArrayList<>(sortedVertices));
-        double bestTraffic = trafficHeuristicPart.getTotalTraffic() +
-                alpha * getSyncTraffic(numCopies, sortedVertices, graph);
-        ArrayList<Vertex> bestSoln = null;
-
-        System.out.println("Initial soln: ");
-        sortedVertices.forEach(vertex -> System.out.print(vertex.getLabel() + " "));
-        System.out.println();
-        System.out.println("Initial traffic: " + bestTraffic);
+            ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
+                    ManhattanGraphGen.mType.UNWRAPPED, false, true);
+            ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
 
+            HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                    ShortestPath.FloydWarshall(graph, false, null);
 
-        for(int tabuRun = tabuRunStart ; tabuRun<=tabuRunFinish ; tabuRun++) {
+            String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                    "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
+                    ".csv";
 
-            int targetVertexNo = 0;
-            Vertex targetVertex = null;
+            int traffic = 1;
 
-            while(listContainsSol(checkedVertices, sortedVertices)){
+            TrafficStore trafficStore = new TrafficStore();
+
+            int numCopies = 3;
+            double alpha = 0.2;
+            int tabuRunStart = 1;
+            int tabuRunFinish = 1000;
+
+            TrafficGenerator.fromFileLinebyLine(
+                    graph,
+                    trafficStore,
+                    traffic,
+                    1,
+                    true,
+                    trafficFile
+            );
+
+            HashMap<Vertex, ListGraph> partitions =
+                    Partitioning.EvolutionaryPartition(
+                            graph,
+                            numCopies,
+                            50,
+                            "random",
+                            "betweennesstfc",
+                            trafficStore,
+                            false,
+                            false,
+                            null
+                    );
+
+            ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
+            LinkedList<ArrayList<Vertex>> checkedVertices = new LinkedList<>();
+
+            TrafficHeuristic trafficHeuristicPart = new TrafficHeuristic(graph,
+                    trafficStore,
+                    numCopies,
+                    fixedcopies,
+                    sortedVertices,
+                    true,
+                    false);
+
+
+            checkedVertices.add(new ArrayList<>(sortedVertices));
+            double bestTraffic = trafficHeuristicPart.getTotalTraffic() +
+                    alpha * getSyncTraffic(numCopies, sortedVertices, graph);
+            ArrayList<Vertex> bestSoln = null;
+
+
+            for (int tabuRun = tabuRunStart; tabuRun <= tabuRunFinish; tabuRun++) {
+
+                int targetVertexNo = 0;
+                Vertex targetVertex = null;
+
+                while (listContainsSol(checkedVertices, sortedVertices)) {
                 /*
                 Pick the random vertex to move
              */
 
-                targetVertexNo = ThreadLocalRandom.current().nextInt(0, numCopies);
-                targetVertex = sortedVertices.get(targetVertexNo);
+                    targetVertexNo = ThreadLocalRandom.current().nextInt(0, numCopies);
+                    targetVertex = sortedVertices.get(targetVertexNo);
 
             /*
                 Get all successors
              */
 
-                LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
-                if(successors.contains(targetVertex))
-                    successors.remove(targetVertex);
+                    LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
+                    if (successors.contains(targetVertex))
+                        successors.remove(targetVertex);
 
             /*
                 Pick one successor randomly
              */
 
-                int newTargetVertexNo = ThreadLocalRandom.current().nextInt(0, successors.size());
-                Vertex newTargetVertex = successors.get(newTargetVertexNo);
+                    int newTargetVertexNo = ThreadLocalRandom.current().nextInt(0, successors.size());
+                    Vertex newTargetVertex = successors.get(newTargetVertexNo);
 
             /*
                 Generate new vertices
              */
 
-                sortedVertices.set(targetVertexNo, newTargetVertex);
-            }
-            checkedVertices.add(new ArrayList<>(sortedVertices));
+                    sortedVertices.set(targetVertexNo, newTargetVertex);
+                }
+                checkedVertices.add(new ArrayList<>(sortedVertices));
 
-            double dataTraffic = 0.0;
-            for(TrafficDemand trafficDemand : trafficStore.getTrafficDemands()){
+                double dataTraffic = 0.0;
+                for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
-                Vertex source = trafficDemand.getSource();
-                Vertex destination = trafficDemand.getDestination();
+                    Vertex source = trafficDemand.getSource();
+                    Vertex destination = trafficDemand.getDestination();
 
-                int minDist = Integer.MAX_VALUE;
+                    int minDist = Integer.MAX_VALUE;
 
-                for(Vertex vertex : sortedVertices){
-                    if((dist.get(source).get(vertex) + dist.get(vertex).get(destination))<minDist){
-                        minDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
+                    for (Vertex vertex : sortedVertices) {
+                        if ((dist.get(source).get(vertex) + dist.get(vertex).get(destination)) < minDist) {
+                            minDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
+                        }
                     }
+
+                    dataTraffic += minDist;
                 }
 
-                dataTraffic += minDist;
-            }
+                double syncTraffic = getSyncTraffic(numCopies, sortedVertices, graph);
+                double currentTraffic = dataTraffic + alpha * syncTraffic;
 
-            double syncTraffic = getSyncTraffic(numCopies, sortedVertices, graph);
-            double currentTraffic = dataTraffic + alpha * syncTraffic;
+                if (currentTraffic <= bestTraffic) {
+                    bestTraffic = currentTraffic;
+                    bestSoln = new ArrayList<>(sortedVertices);
+                } else {
+                    sortedVertices.set(targetVertexNo, targetVertex);
+                }
 
-            if(currentTraffic<=bestTraffic) {
-                bestTraffic = currentTraffic;
-                bestSoln = new ArrayList<>(sortedVertices);
-                change++;
-            }
-            else{
-                sortedVertices.set(targetVertexNo, targetVertex);
-            }
 
+            }
 
         }
 
-        System.out.println("Best combination is: " );
-        bestSoln.forEach(vertex -> System.out.print(vertex.getLabel() + " "));
-        System.out.println();
-        System.out.println("Final traffic: " + bestTraffic);
-        System.out.println("Changes: " + change);
+
+
+        //System.out.println("Final traffic: " + bestTraffic);
 
 
     }
@@ -219,6 +223,30 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
         return syncTraffic;
 
+    }
+
+    private static Pair<Double, Double> interval(Collection<Double> values){
+        double sum = 0.0;
+        double num = 0.0;
+
+        for(Double d : values){
+            sum+=d;
+        }
+
+        double mean = sum/values.size();
+
+        for(Double d : values){
+            double numi = Math.pow(d-mean,2);
+            num+=numi;
+        }
+
+        double dev = Math.sqrt(num/values.size());
+
+        return new Pair<>(mean, (dev*1.96)/Math.sqrt(values.size()));
+    }
+
+    private static double round2(double number){
+        return Math.round((number*100.0))/100.0;
     }
 
 }

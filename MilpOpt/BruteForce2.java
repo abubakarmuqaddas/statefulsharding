@@ -11,12 +11,15 @@ import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.graph.algorithms.getNCombinations;
+import statefulsharding.heuristic.TrafficHeuristic;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import static statefulsharding.heuristic.TrafficHeuristic.hType.shortestpath;
 
 /**
  * Brute force, minimizing the total traffic in the network
@@ -34,15 +37,16 @@ public class BruteForce2{
 
         boolean copySameSwitchAllowed = true;
         double alpha;
-        double alphaStart = 0.08;
-        double alphaEnd = 0.09;
-        double alphaInterval = 0.001;
+        double alphaStart = 0.4;
+        double alphaEnd = 0.4;
+        double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
-        int size = 4;
+        int size = 9;
+
         int trafficNo = 1;
         int trafficStart = 1;
         int trafficEnd = 1;
-        int numCopies = 6;
+        int numCopies = 3;
 
         long numCombinations;
         long currentCombination = 0;
@@ -133,6 +137,7 @@ public class BruteForce2{
             );
 
 
+
             for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + alphaInterval) {
 
                 System.out.println("Alpha: " + alpha);
@@ -147,6 +152,7 @@ public class BruteForce2{
                         }
 
                         double currentTraffic = 0.0;
+
 
                         for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
@@ -166,6 +172,7 @@ public class BruteForce2{
 
                         double currentSyncTraffic = 0;
                         if (combination.size() > 1) {
+
                             currentSyncTraffic = alpha * getSyncTraffic(vertices, graph);
                             currentTraffic += currentSyncTraffic;
                         }
@@ -178,7 +185,7 @@ public class BruteForce2{
 
                         currentCombination++;
 
-                        if (currentCombination % 100000 == 0) {
+                        if (currentCombination % 1000 == 0) {
 
                             double pCent = Math.round(((double) currentCombination / numCombinations) * 100000000)
                                     / 1000000.0;
