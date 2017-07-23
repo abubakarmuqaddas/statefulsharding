@@ -20,8 +20,10 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
     public static void main(String[] args){
 
-        int startSize = 5;
-        int finalSize = 5;
+        LinkedList<String> result = new LinkedList<>();
+
+        int startSize = 3;
+        int finalSize = 11;
 
         int startTraffic = 1;
         int endTraffic = 10;
@@ -32,7 +34,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
 
-        double alpha = 0.2;
+        double alpha = 0.75;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
 
@@ -125,7 +127,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
                             for (int tabuRun = tabuRunStart; tabuRun <= tabuRunFinish; tabuRun++) {
 
-                                System.out.println("Tabu run: " + tabuRun);
+                               // System.out.println("Tabu run: " + tabuRun);
 
                                 int targetVertexNo = 0;
                                 Vertex targetVertex = null;
@@ -224,6 +226,29 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
             //System.out.println("Stats for size 3");
             /*size copy0m copy0l copy0u copy1 copy2 copy3*/
+
+            result.add(size + " " +
+                    round2(copy0stats.getFirst()) + " " +
+                    round2(copy0stats.getFirst()-copy0stats.getSecond()) + " " +
+                    round2(copy0stats.getFirst()+copy0stats.getSecond()) + " " +
+
+                    round2(copy1stats.getFirst()) + " " +
+                    round2(copy1stats.getFirst()-copy1stats.getSecond()) + " " +
+                    round2(copy1stats.getFirst()+copy1stats.getSecond()) + " " +
+
+                    round2(copy2stats.getFirst()) + " " +
+                    round2(copy2stats.getFirst()-copy2stats.getSecond()) + " " +
+                    round2(copy2stats.getFirst()+copy2stats.getSecond()) + " " +
+
+                    round2(copy3stats.getFirst()) + " " +
+                    round2(copy3stats.getFirst()-copy3stats.getSecond()) + " " +
+                    round2(copy3stats.getFirst()+copy3stats.getSecond()) + " " +
+
+                    round2(copy4stats.getFirst()) + " " +
+                    round2(copy4stats.getFirst()-copy4stats.getSecond()) + " " +
+                    round2(copy4stats.getFirst()+copy4stats.getSecond()));
+
+
             System.out.println(
                     size + " " +
                             round2(copy0stats.getFirst()) + " " +
@@ -249,6 +274,11 @@ public class EvaluateTrafficHeuristicTabuSearch {
             );
 
         }
+
+        for (String s : result) {
+            System.out.println(s);
+        }
+
     }
 
     private static boolean listContainsSol(LinkedList<ArrayList<Vertex>> checkedVertices,
