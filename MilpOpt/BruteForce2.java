@@ -37,16 +37,16 @@ public class BruteForce2{
 
         boolean copySameSwitchAllowed = true;
         double alpha;
-        double alphaStart = 0.4;
-        double alphaEnd = 0.4;
+        double alphaStart = 0;
+        double alphaEnd = 0;
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
-        int size = 9;
+        int size = 4;
 
         int trafficNo = 1;
         int trafficStart = 1;
-        int trafficEnd = 1;
-        int numCopies = 3;
+        int trafficEnd = 10;
+        int numCopies = 7;
 
         long numCombinations;
         long currentCombination = 0;
