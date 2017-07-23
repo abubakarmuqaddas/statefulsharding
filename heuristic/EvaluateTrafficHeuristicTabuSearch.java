@@ -5,6 +5,7 @@ import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
+import statefulsharding.graph.LoadGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.graph.algorithms.ShortestPath;
@@ -22,19 +23,25 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
         LinkedList<String> result = new LinkedList<>();
 
+        /*
         int startSize = 3;
         int finalSize = 11;
+        */
+        double p=0.5;
+
+        int startSize = 12;
+        int finalSize = 120;
 
         int startTraffic = 1;
         int endTraffic = 10;
 
         int startCopies = 1;
-        int endCopies = 4;
+        int endCopies = 3;
 
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
 
-        double alpha = 0.75;
+        double alpha = 0.25;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
 
@@ -44,27 +51,44 @@ public class EvaluateTrafficHeuristicTabuSearch {
         HashMap<Integer, HashMap<Integer, ArrayList<Double>>>
                 TrafficPartition = new HashMap<>();
 
-        for(int size = startSize ; size<=finalSize ; size++) {
+        //for(int size = startSize ; size<=finalSize ; size++) {
+
+        for(int size = startSize ; size<=finalSize ; size+=12) {
 
             TrafficShortestPath.put(size, new HashMap<>());
             TrafficPartition.put(size, new HashMap<>());
 
+            /*
             ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
                     ManhattanGraphGen.mType.UNWRAPPED, false, true);
             ListGraph graph = manhattanGraphGen.getManhattanGraph();
+            */
+
+            /*
+            Watts Strogatz
+             */
+
+
+            String graphLocation = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                    "topologies_traffic/Traffic/WS_graph_" + p +
+                    "/WS_graph" + size + "_" + p + "_8.csv";
+            ListGraph graph = LoadGraph.GraphParserJ(graphLocation, Integer.MAX_VALUE, true);
 
 
             HashMap<Vertex, HashMap<Vertex, Integer>> dist =
                     ShortestPath.FloydWarshall(graph, false, null);
 
+            /*
             String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                     "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
                     ".csv";
+                    */
 
             for(int traffic = startTraffic ; traffic<=endTraffic ; traffic++) {
 
                 TrafficStore trafficStore = new TrafficStore();
 
+                /*
                 TrafficGenerator.fromFileLinebyLine(
                         graph,
                         trafficStore,
@@ -73,6 +97,12 @@ public class EvaluateTrafficHeuristicTabuSearch {
                         true,
                         trafficFile
                 );
+                */
+
+                TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, true,
+                        "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                                "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
+                                ".csv");
 
                 TrafficHeuristic trafficHeuristicSP = new TrafficHeuristic(graph,
                         trafficStore,
@@ -216,13 +246,13 @@ public class EvaluateTrafficHeuristicTabuSearch {
             Collection<Double> copy1 = TrafficPartition.get(size).get(1);
             Collection<Double> copy2 = TrafficPartition.get(size).get(2);
             Collection<Double> copy3 = TrafficPartition.get(size).get(3);
-            Collection<Double> copy4 = TrafficPartition.get(size).get(4);
+
 
             Pair<Double, Double> copy0stats = interval(copy0);
             Pair<Double, Double> copy1stats = interval(copy1);
             Pair<Double, Double> copy2stats = interval(copy2);
             Pair<Double, Double> copy3stats = interval(copy3);
-            Pair<Double, Double> copy4stats = interval(copy4);
+
 
             //System.out.println("Stats for size 3");
             /*size copy0m copy0l copy0u copy1 copy2 copy3*/
@@ -242,11 +272,8 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
                     round2(copy3stats.getFirst()) + " " +
                     round2(copy3stats.getFirst()-copy3stats.getSecond()) + " " +
-                    round2(copy3stats.getFirst()+copy3stats.getSecond()) + " " +
-
-                    round2(copy4stats.getFirst()) + " " +
-                    round2(copy4stats.getFirst()-copy4stats.getSecond()) + " " +
-                    round2(copy4stats.getFirst()+copy4stats.getSecond()));
+                    round2(copy3stats.getFirst()+copy3stats.getSecond()) + " "
+            );
 
 
             System.out.println(
@@ -265,12 +292,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
                             round2(copy3stats.getFirst()) + " " +
                             round2(copy3stats.getFirst()-copy3stats.getSecond()) + " " +
-                            round2(copy3stats.getFirst()+copy3stats.getSecond()) + " " +
-
-                            round2(copy4stats.getFirst()) + " " +
-                            round2(copy4stats.getFirst()-copy4stats.getSecond()) + " " +
-                            round2(copy4stats.getFirst()+copy4stats.getSecond())
-
+                            round2(copy3stats.getFirst()+copy3stats.getSecond()) + " "
             );
 
         }
