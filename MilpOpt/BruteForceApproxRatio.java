@@ -4,6 +4,7 @@ import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
+import statefulsharding.graph.LoadGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.graph.algorithms.getNCombinations;
@@ -34,11 +35,13 @@ public class BruteForceApproxRatio {
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
 
-        int size =      6;
+        int size =      48;
         int numCopies = 3;
 
         int trafficStart = 1;
         int trafficEnd = 10;
+
+        double p=0.5;
 
 
 
@@ -50,17 +53,29 @@ public class BruteForceApproxRatio {
 
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
 
-        String trafficFile = initial2 +
-                "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
-                ".csv";
+        //String trafficFile = initial2 +
+        //        "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
+        //        ".csv";
 
         /**
          * Generate graph
          */
-
+        /*
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
                 ManhattanGraphGen.mType.UNWRAPPED, false, true);
         ListGraph graph = manhattanGraphGen.getManhattanGraph();
+        */
+
+        /*
+        Watts Strogatz
+        */
+
+        String graphLocation = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                "topologies_traffic/Traffic/WS_graph_" + p +
+                "/WS_graph" + size + "_" + p + "_8.csv";
+        ListGraph graph = LoadGraph.GraphParserJ(graphLocation, Integer.MAX_VALUE, true);
+
+
 
         /**
          * Generate distances from all vertices
@@ -120,7 +135,7 @@ public class BruteForceApproxRatio {
              */
 
             TrafficStore trafficStore = new TrafficStore();
-
+            /*
             TrafficGenerator.fromFileLinebyLine(
                     graph,
                     trafficStore,
@@ -129,7 +144,12 @@ public class BruteForceApproxRatio {
                     true,
                     trafficFile
             );
+            */
 
+            TrafficGenerator.fromFileLinebyLine(graph, trafficStore, trafficNo, 1, true,
+                    "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                            "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
+                            ".csv");
 
 
             for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + alphaInterval) {

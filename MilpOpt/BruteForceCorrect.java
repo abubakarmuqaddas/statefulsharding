@@ -37,15 +37,16 @@ public class BruteForceCorrect {
 
         boolean copySameSwitchAllowed = true;
         double alpha;
-        double alphaStart = 0;
-        double alphaEnd = 0;
+        double alphaStart = 0.0;
+        double alphaEnd = 0.0;
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
         int size = 4;
 
         int trafficNo = 1;
-        int trafficStart = 1;
-        int trafficEnd = 10;
+        //int trafficStart = 7;
+        //int trafficEnd = 7;
+        int trafficArray[] = {8,5,6,1,2,3,4,9,10,7};
         int numCopies = 7;
 
         long numCombinations;
@@ -119,7 +120,9 @@ public class BruteForceCorrect {
 
         numCombinations = combinations.size();
 
-        for(trafficNo = trafficStart ; trafficNo<=trafficEnd ; trafficNo++) {
+
+
+        for(trafficNo = 0 ; trafficNo<=9 ; trafficNo++) {
 
             /**
              * Get Traffic!
@@ -130,7 +133,7 @@ public class BruteForceCorrect {
             TrafficGenerator.fromFileLinebyLine(
                     graph,
                     trafficStore,
-                    trafficNo,
+                    trafficArray[trafficNo],
                     1,
                     true,
                     trafficFile
@@ -237,11 +240,21 @@ public class BruteForceCorrect {
 
         double currentAlpha = alphaStart;
         System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
+        /*
         for(int i=0 ; i<bestTraffic.size() ; i++){
             System.out.println(Math.round(currentAlpha*100000)/100000.0 + " "
                     + Math.round(bestTraffic.get(i)*100.0/graph.getVertices().size())/100.0 + " "
                     + Math.round((bestTraffic.get(i)-syncTraffic.get(i))*100.0/graph.getVertices().size())/100.0 + " "
                     + Math.round(syncTraffic.get(i)*100.0/graph.getVertices().size())/100.0 + " " +
+                    numLocationsUsed.get(i));
+            currentAlpha+=alphaInterval;
+        }
+        */
+        for(int i=0 ; i<bestTraffic.size() ; i++){
+            System.out.println(//currentAlpha + " " +
+                    bestTraffic.get(i) + " "
+                    + bestTraffic.get(i) + " "
+                    + syncTraffic.get(i) + " " +
                     numLocationsUsed.get(i));
             currentAlpha+=alphaInterval;
         }
