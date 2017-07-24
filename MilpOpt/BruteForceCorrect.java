@@ -120,30 +120,27 @@ public class BruteForceCorrect {
 
         numCombinations = combinations.size();
 
-
-
-        for(trafficNo = 0 ; trafficNo<=9 ; trafficNo++) {
-
-            /**
-             * Get Traffic!
-             */
-
-            TrafficStore trafficStore = new TrafficStore();
-
-            TrafficGenerator.fromFileLinebyLine(
-                    graph,
-                    trafficStore,
-                    trafficArray[trafficNo],
-                    1,
-                    true,
-                    trafficFile
-            );
-
-
-
-            for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + alphaInterval) {
+        for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + alphaInterval) {
 
                 System.out.println("Alpha: " + alpha);
+
+                for(trafficNo = 0 ; trafficNo<=9 ; trafficNo++) {
+
+                /**
+                 * Get Traffic!
+                 */
+
+                TrafficStore trafficStore = new TrafficStore();
+
+                TrafficGenerator.fromFileLinebyLine(
+                        graph,
+                        trafficStore,
+                        trafficArray[trafficNo],
+                        1,
+                        true,
+                        trafficFile
+                );
+
 
                 for(int combSize = minSize ; combSize<=maxSize ; combSize++) {
                     LinkedList<LinkedList<Integer>> combSizeCombinations = allCombinations.get(combSize);
@@ -193,20 +190,23 @@ public class BruteForceCorrect {
                             double pCent = Math.round(((double) currentCombination / numCombinations) * 100000000)
                                     / 1000000.0;
 
+                            /*
                             System.out.println(" Processed: " + currentCombination + "/" + numCombinations + ", " +
                                     pCent + "%");
+                            */
 
                         }
                     }
                 }
 
-                System.out.println("Best combination traffic: " + minCombination);
+                //System.out.println("Best combination traffic: " + minCombination);
 
-
+                /*
                 bestCombination.forEach(vertex ->
                     System.out.print(vertex.getLabel() + " ")
                 );
                 System.out.println();
+                */
 
                 allBestCombinations.add(bestCombination);
                 numLocationsUsed.add(bestCombination.size());
@@ -221,6 +221,7 @@ public class BruteForceCorrect {
             }
         }
 
+        /*
         System.out.println("Best combinations: ");
 
         System.out.print("[ ");
@@ -232,14 +233,15 @@ public class BruteForceCorrect {
             System.out.print("], ");
         }
         System.out.println();
+        */
 
 
-        System.out.println(bestTraffic.toString());
-        System.out.println(syncTraffic.toString());
+        //System.out.println(bestTraffic.toString());
+        //System.out.println(syncTraffic.toString());
         System.out.println("LocationsUsed: " + numLocationsUsed.toString());
 
         double currentAlpha = alphaStart;
-        System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
+        //System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
         /*
         for(int i=0 ; i<bestTraffic.size() ; i++){
             System.out.println(Math.round(currentAlpha*100000)/100000.0 + " "
@@ -250,6 +252,7 @@ public class BruteForceCorrect {
             currentAlpha+=alphaInterval;
         }
         */
+        System.out.println("totalTraffic dataTraffic syncTraffic numCopiesUsed");
         for(int i=0 ; i<bestTraffic.size() ; i++){
             System.out.println(//currentAlpha + " " +
                     bestTraffic.get(i) + " "
