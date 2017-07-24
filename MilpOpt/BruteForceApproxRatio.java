@@ -29,16 +29,18 @@ public class BruteForceApproxRatio {
 
         boolean copySameSwitchAllowed = true;
         double alpha;
-        double alphaStart = 0;
-        double alphaEnd = 0;
+        double alphaStart = 1.0;
+        double alphaEnd = 1.0;
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
-        int size = 4;
 
-        int trafficNo = 1;
+        int size =      6;
+        int numCopies = 3;
+
         int trafficStart = 1;
         int trafficEnd = 10;
-        int numCopies = 7;
+
+
 
         long numCombinations;
         long currentCombination = 0;
@@ -111,7 +113,7 @@ public class BruteForceApproxRatio {
 
         numCombinations = combinations.size();
 
-        for(trafficNo = trafficStart ; trafficNo<=trafficEnd ; trafficNo++) {
+        for(int trafficNo = trafficStart ; trafficNo<=trafficEnd ; trafficNo++) {
 
             /**
              * Get Traffic!
