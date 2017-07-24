@@ -129,6 +129,7 @@ public class BruteForceCorrect {
                 /**
                  * Get Traffic!
                  */
+                System.out.println("TrafficNo: " + (trafficNo+1));
 
                 TrafficStore trafficStore = new TrafficStore();
 
