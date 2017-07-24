@@ -23,14 +23,17 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
         LinkedList<String> result = new LinkedList<>();
 
-        /*
+
         int startSize = 3;
         int finalSize = 11;
-        */
-        double p=0.5;
 
+
+        //double p=0.5;
+
+        /*
         int startSize = 12;
         int finalSize = 120;
+        */
 
         int startTraffic = 1;
         int endTraffic = 10;
@@ -42,8 +45,8 @@ public class EvaluateTrafficHeuristicTabuSearch {
         int endPartitionRuns = 10;
 
         //double alpha = 0.25;
-        double alphaStart = 0;
-        double alphaEnd = 1.0;
+        double alphaStart = 0.0;
+        double alphaEnd = 0.0;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
 
@@ -59,20 +62,21 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
             System.out.println("Alpha: " + alpha);
 
-            for (int size = startSize; size <= finalSize; size += 12) {
+            //for (int size = startSize; size <= finalSize; size += 12) {
+            for (int size = startSize; size <= finalSize; size++) {
 
                 TrafficShortestPath.put(size, new HashMap<>());
                 TrafficPartition.put(size, new HashMap<>());
 
-            /*
-            ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
-                    ManhattanGraphGen.mType.UNWRAPPED, false, true);
-            ListGraph graph = manhattanGraphGen.getManhattanGraph();
-            */
 
-            /*
-            Watts Strogatz
-             */
+                ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
+                        ManhattanGraphGen.mType.UNWRAPPED, false, true);
+                ListGraph graph = manhattanGraphGen.getManhattanGraph();
+
+
+                /*
+                Watts Strogatz
+
 
 
                 String graphLocation = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
@@ -80,35 +84,40 @@ public class EvaluateTrafficHeuristicTabuSearch {
                         "/WS_graph" + size + "_" + p + "_8.csv";
                 ListGraph graph = LoadGraph.GraphParserJ(graphLocation, Integer.MAX_VALUE, true);
 
+                */
+
 
                 HashMap<Vertex, HashMap<Vertex, Integer>> dist =
                         ShortestPath.FloydWarshall(graph, false, null);
 
-            /*
-            String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
-                    "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
-                    ".csv";
-                    */
+
+                String trafficFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                        "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
+                        ".csv";
+
 
                 for (int traffic = startTraffic; traffic <= endTraffic; traffic++) {
 
                     TrafficStore trafficStore = new TrafficStore();
 
-                /*
-                TrafficGenerator.fromFileLinebyLine(
-                        graph,
-                        trafficStore,
-                        traffic,
-                        1,
-                        true,
-                        trafficFile
-                );
-                */
+
+                    TrafficGenerator.fromFileLinebyLine(
+                            graph,
+                            trafficStore,
+                            traffic,
+                            1,
+                            true,
+                            trafficFile
+                    );
+
+                    /*
 
                     TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, true,
                             "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                                     "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
                                     ".csv");
+
+                                    */
 
                     TrafficHeuristic trafficHeuristicSP = new TrafficHeuristic(graph,
                             trafficStore,
@@ -121,16 +130,16 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
                     for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
 
-                    /*
-                    System.out.println("Size: " + size + ", Traffic: " + traffic
+
+                        System.out.println("Size: " + size + ", Traffic: " + traffic
                             + ", Copy: " + numCopies);
-                            */
+
 
                         TrafficPartition.get(size).putIfAbsent(numCopies, new ArrayList<>());
 
                         for (int partitionNum = startPartitionRuns; partitionNum <= endPartitionRuns; partitionNum++) {
 
-                            //System.out.println("Partition num: " + partitionNum);
+                            System.out.println("Partition num: " + partitionNum);
 
                             HashMap<Vertex, ListGraph> partitions =
                                     Partitioning.EvolutionaryPartition(
@@ -229,9 +238,16 @@ public class EvaluateTrafficHeuristicTabuSearch {
                                     double currentTraffic = dataTraffic + alpha * syncTraffic;
 
                                     if (currentTraffic <= bestTraffic) {
+                                        /*
+                                        System.out.println("Traffic: "+ traffic + ", Copy: " + numCopies +
+                                                ", DataTraffic: " + dataTraffic + ", SyncTraffic: "
+                                                + syncTraffic + ", TotalTraffic: " + currentTraffic);
+                                        */
+
                                         bestTraffic = currentTraffic;
                                         bestSoln = new ArrayList<>(sortedVertices);
-                                    } else {
+                                    }
+                                    else {
                                         sortedVertices.set(targetVertexNo, targetVertex);
                                     }
                                 }

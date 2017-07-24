@@ -27,7 +27,7 @@ import static statefulsharding.heuristic.TrafficHeuristic.hType.shortestpath;
  */
 
 
-public class BruteForce2{
+public class BruteForceCorrect {
 
     public static void main(String[] args) {
 
