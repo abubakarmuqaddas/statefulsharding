@@ -251,7 +251,7 @@ public class BruteForceCorrect {
 
         //System.out.println(bestTraffic.toString());
         //System.out.println(syncTraffic.toString());
-        System.out.println("LocationsUsed: " + numLocationsUsed.toString());
+        //System.out.println("LocationsUsed: " + numLocationsUsed.toString());
 
         double currentAlpha = alphaStart;
         //System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
