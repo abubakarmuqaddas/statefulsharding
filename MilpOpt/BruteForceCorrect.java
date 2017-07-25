@@ -38,7 +38,7 @@ public class BruteForceCorrect {
         boolean copySameSwitchAllowed = true;
         double alpha;
         double alphaStart = 0.0;
-        double alphaEnd = 1.0;
+        double alphaEnd = 0.0;
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
         int size = 4;
@@ -47,7 +47,7 @@ public class BruteForceCorrect {
         //int trafficStart = 7;
         //int trafficEnd = 7;
         int trafficArray[] = {8,5,6,1,2,3,4,9,10,7};
-        int numCopies = 7;
+        int numCopies = 1;
 
         long numCombinations;
         long currentCombination = 0;
@@ -227,7 +227,7 @@ public class BruteForceCorrect {
             for(int i=0 ; i<bestTraffic.size() ; i++){
                 System.out.println(//currentAlpha + " " +
                         bestTraffic.get(i) + " "
-                                + bestTraffic.get(i) + " "
+                                + (bestTraffic.get(i)-syncTraffic.get(i)) + " "
                                 + syncTraffic.get(i) + " " +
                                 numLocationsUsed.get(i));
             }
