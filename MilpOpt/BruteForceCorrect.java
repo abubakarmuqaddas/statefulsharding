@@ -77,9 +77,7 @@ public class BruteForceCorrect {
                 ShortestPath.FloydWarshall(graph, false, null);
 
         LinkedList<ArrayList<Vertex>> allBestCombinations = new LinkedList<>();
-        LinkedList<Double> bestTraffic = new LinkedList<>();
-        LinkedList<Double> syncTraffic = new LinkedList<>();
-        LinkedList<Integer> numLocationsUsed = new LinkedList<>();
+
 
         /**
          * Generate states and numCopies
@@ -121,6 +119,10 @@ public class BruteForceCorrect {
         numCombinations = combinations.size();
 
         for(alpha = alphaStart ; alpha<=alphaEnd ; alpha = alpha + alphaInterval) {
+
+            LinkedList<Double> bestTraffic = new LinkedList<>();
+            LinkedList<Double> syncTraffic = new LinkedList<>();
+            LinkedList<Integer> numLocationsUsed = new LinkedList<>();
 
                 System.out.println("Alpha: " + alpha);
 
@@ -220,6 +222,16 @@ public class BruteForceCorrect {
                 bestCombination = new ArrayList<>();
 
             }
+
+            System.out.println("totalTraffic dataTraffic syncTraffic numCopiesUsed");
+            for(int i=0 ; i<bestTraffic.size() ; i++){
+                System.out.println(//currentAlpha + " " +
+                        bestTraffic.get(i) + " "
+                                + bestTraffic.get(i) + " "
+                                + syncTraffic.get(i) + " " +
+                                numLocationsUsed.get(i));
+            }
+
         }
 
         /*
@@ -252,7 +264,7 @@ public class BruteForceCorrect {
                     numLocationsUsed.get(i));
             currentAlpha+=alphaInterval;
         }
-        */
+
         System.out.println("totalTraffic dataTraffic syncTraffic numCopiesUsed");
         for(int i=0 ; i<bestTraffic.size() ; i++){
             System.out.println(//currentAlpha + " " +
@@ -262,6 +274,7 @@ public class BruteForceCorrect {
                     numLocationsUsed.get(i));
             currentAlpha+=alphaInterval;
         }
+        */
     }
 
     private static double getSyncTraffic(ArrayList<Vertex> vertices, ListGraph graph){
