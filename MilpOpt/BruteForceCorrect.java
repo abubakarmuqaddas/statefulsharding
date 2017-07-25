@@ -38,7 +38,7 @@ public class BruteForceCorrect {
         boolean copySameSwitchAllowed = true;
         double alpha;
         double alphaStart = 0.0;
-        double alphaEnd = 0.0;
+        double alphaEnd = 1.0;
         double alphaInterval = 0.1;
         int capacity = Integer.MAX_VALUE;
         int size = 4;
