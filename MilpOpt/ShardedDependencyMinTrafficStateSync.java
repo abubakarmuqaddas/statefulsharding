@@ -679,7 +679,7 @@ public class ShardedDependencyMinTrafficStateSync {
              * TODO: Need to implement this!
              *
              *
-             */
+
 
             for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
                 for (List<StateCopy> stateCopies: Flows.get(trafficDemand).keySet()) {
@@ -711,6 +711,7 @@ public class ShardedDependencyMinTrafficStateSync {
                     }
                 }
             }
+             */
 
 
 
@@ -1394,16 +1395,16 @@ public class ShardedDependencyMinTrafficStateSync {
 
                         if(stateCopy.getState().getLabel().equals("a") &&
                                 stateCopy.getCopyNumber()==1 &&
-                                vertex.getLabel()==6){
+                                vertex.getLabel()==2){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
 
                         else if(stateCopy.getState().getLabel().equals("a") &&
                                 stateCopy.getCopyNumber()==2 &&
-                                vertex.getLabel()==10){
+                                vertex.getLabel()==0){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-
+                        /*
                         else if(stateCopy.getState().getLabel().equals("b") &&
                                 stateCopy.getCopyNumber()==1 &&
                                 vertex.getLabel()==6){
@@ -1419,7 +1420,7 @@ public class ShardedDependencyMinTrafficStateSync {
                                 vertex.getLabel()==5){
                             cplex.addEq(Placement.get(vertex).get(stateCopy),1);
                         }
-
+                        */
                         else{
                             cplex.addEq(Placement.get(vertex).get(stateCopy),0);
                         }

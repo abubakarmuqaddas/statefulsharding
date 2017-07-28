@@ -18,7 +18,7 @@ public class TestingClass {
 
     public static void main(String[] args){
 
-        int size = 4;
+        int size = 3;
         int trafficNo = 1;
         int dependencySize = 1;
         int capacity = Integer.MAX_VALUE;
@@ -35,8 +35,12 @@ public class TestingClass {
                 "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
                 ".csv";
 
+        /*
         TrafficGenerator.fromFileLinebyLine(graph, trafficStore, trafficNo, 1, true,
                 trafficFile);
+                */
+
+        trafficStore.addTrafficDemand(new TrafficDemand(graph.getVertex(0),graph.getVertex(2),1));
 
         LinkedList<LinkedList<StateVariable>> allDependencies =
                 GenerateStates.BinaryTreeGenerator(dependencySize, stateStore);
@@ -59,8 +63,6 @@ public class TestingClass {
                     )));
         }
 
-
-
         System.out.println();
         dependencies.forEach((trafficDemand, stateVariables) -> {
             System.out.println(trafficDemand.getSource().getLabel() + " -> " +
@@ -75,11 +77,11 @@ public class TestingClass {
 
 
         boolean verbose = true;
-        boolean fixConstraints = false;
+        boolean fixConstraints = true;
 
         OptimizationOptions optimizationOptions = new OptimizationOptions(verbose, fixConstraints);
 
-        ShardedDependencyMinCongestionStateSync opt = new ShardedDependencyMinCongestionStateSync(graph,
+        ShardedDependencyMinTrafficStateSync opt = new ShardedDependencyMinTrafficStateSync(graph,
                                                                                 trafficStore,
                                                                                 dependencies,
                                                                                 optimizationOptions,
