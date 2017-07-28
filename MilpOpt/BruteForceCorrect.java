@@ -48,9 +48,9 @@ public class BruteForceCorrect {
         int size = 4;
 
         int trafficStart = 1;
-        int trafficEnd = 10;
+        int trafficEnd = 1000;
         //int trafficArray[] = {8,5,6,1,2,3,4,9,10,7};
-        int numCopies = 2;
+        int numCopies = 7;
 
         long numCombinations;
         long currentCombination = 0;
