@@ -8,6 +8,7 @@ import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
+import statefulsharding.graph.LoadGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.graph.algorithms.getNCombinations;
@@ -43,14 +44,15 @@ public class BruteForceCorrect {
         double alpha;
         double alphaStart = 0.0;
         double alphaEnd = 1.0;
-        double alphaInterval = 0.1;
+        double alphaInterval = 0.25;
         int capacity = Integer.MAX_VALUE;
-        int size = 4;
+        //int size = 12;
+        double p=0.5;
 
         int trafficStart = 1;
-        int trafficEnd = 1000;
+        int trafficEnd = 100;
         //int trafficArray[] = {8,5,6,1,2,3,4,9,10,7};
-        int numCopies = 7;
+        int numCopies = 3;
 
         long numCombinations;
         long currentCombination = 0;
@@ -60,102 +62,115 @@ public class BruteForceCorrect {
 
         String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
 
+        /*
         String trafficFile = initial2 +
                 "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
                 ".csv";
+                */
 
-        /**
-         * Generate graph
-         */
+        for(int size=12 ; size<=48 ; size=size+12 ) {
 
+            System.out.println();
+            System.out.println("Size: " + size);
+            System.out.println();
+
+            /**
+             * Generate graph
+             */
+        /*
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
                 ManhattanGraphGen.mType.UNWRAPPED, false, true);
         ListGraph graph = manhattanGraphGen.getManhattanGraph();
+        */
+            String graphLocation = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                    "topologies_traffic/Traffic/WS_graph_" + p +
+                    "/WS_graph" + size + "_" + p + "_8.csv";
+            ListGraph graph = LoadGraph.GraphParserJ(graphLocation, Integer.MAX_VALUE, true);
 
-        /**
-         * Generate distances from all vertices
-         */
+            /**
+             * Generate distances from all vertices
+             */
 
-        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
-                ShortestPath.FloydWarshall(graph, false, null);
+            HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                    ShortestPath.FloydWarshall(graph, false, null);
 
-        //LinkedList<ArrayList<Vertex>> allBestCombinations = new LinkedList<>();
+            LinkedList<ArrayList<Vertex>> allBestCombinations = new LinkedList<>();
 
 
-        /**
-         * Generate states and numCopies
-         */
+            /**
+             * Generate states and numCopies
+             */
 
-        /**
-         * Generate all state combinations
-         */
+            /**
+             * Generate all state combinations
+             */
 
-        LinkedList<LinkedList<Integer>> combinations = null;
+            LinkedList<LinkedList<Integer>> combinations = null;
 
-        if (copySameSwitchAllowed) {
-            combinations = getNCombinations.getPermutations(numCopies, graph.getVerticesInt());
-        }
-        else {
-            combinations = getNCombinations.getCombinations(graph.getVerticesInt(), numCopies);
-        }
+            if (copySameSwitchAllowed) {
+                combinations = getNCombinations.getPermutations(numCopies, graph.getVerticesInt());
+            } else {
+                combinations = getNCombinations.getCombinations(graph.getVerticesInt(), numCopies);
+            }
 
         /*
             Rearrange combinations according to size
             First: get min & max size
          */
 
-        int minSize = 1;
-        int maxSize = numCopies;
+            int minSize = 1;
+            int maxSize = numCopies;
 
-        HashMap<Integer,LinkedList<LinkedList<Integer>>> allCombinations = new HashMap<>();
+            HashMap<Integer, LinkedList<LinkedList<Integer>>> allCombinations = new HashMap<>();
 
-        for(int i= minSize ; i<=maxSize ; i++){
-            allCombinations.put(i, new LinkedList<>());
-        }
+            for (int i = minSize; i <= maxSize; i++) {
+                allCombinations.put(i, new LinkedList<>());
+            }
 
-        for(LinkedList<Integer> linkedList : combinations){
-            allCombinations.get(linkedList.size()).add(linkedList);
-        }
+            for (LinkedList<Integer> linkedList : combinations) {
+                allCombinations.get(linkedList.size()).add(linkedList);
+            }
 
-        numCombinations = combinations.size();
-
-
-        /*
-        **************************************************
-         */
-
-
-        /**
-         *
-         * Generate files:
-         *
-         */
-
-        HashMap<Double, FileWriter> fileWriterMap = new HashMap<>();
-        HashMap<Double, BufferedWriter> bufferedWriterMap = new HashMap<>();
-        HashMap<Double, PrintWriter> printWriterMap = new HashMap<>();
+            numCombinations = combinations.size();
 
 
         /*
         **************************************************
          */
 
-        try {
+
+            /**
+             *
+             * Generate files:
+             *
+             */
+
+            //HashMap<Double, FileWriter> fileWriterMap = new HashMap<>();
+            //HashMap<Double, BufferedWriter> bufferedWriterMap = new HashMap<>();
+            //HashMap<Double, PrintWriter> printWriterMap = new HashMap<>();
+
+
+        /*
+        **************************************************
+         */
+
+            //try {
 
             for (alpha = alphaStart; alpha <= alphaEnd; alpha = alpha + alphaInterval) {
-
+                /*
                 fileWriterMap.put(alpha, new FileWriter("alpha_" + alpha + ".txt"));
                 bufferedWriterMap.put(alpha, new BufferedWriter(fileWriterMap.get(alpha)));
                 printWriterMap.put(alpha,new PrintWriter(bufferedWriterMap.get(alpha)));
 
                 printWriterMap.get(alpha).println("totalTraffic dataTraffic syncTraffic numCopiesUsed");
                 printWriterMap.get(alpha).flush();
+                */
 
-                /*
+
                 LinkedList<Double> bestTraffic = new LinkedList<>();
                 LinkedList<Double> syncTraffic = new LinkedList<>();
                 LinkedList<Integer> numLocationsUsed = new LinkedList<>();
-                */
+
 
                 System.out.println("Alpha: " + alpha);
 
@@ -164,22 +179,24 @@ public class BruteForceCorrect {
                     /**
                      * Get Traffic!
                      */
-                    System.out.println("TrafficNo: " + (trafficNo));
+                    //System.out.println("TrafficNo: " + (trafficNo));
 
                     TrafficStore trafficStore = new TrafficStore();
-
                     /*
+
                     TrafficGenerator.fromFileLinebyLine(
                             graph,
                             trafficStore,
-                            trafficArray[trafficNo],
+                            trafficNo,
                             1,
-                            true,
+                            false,
                             trafficFile
                     );
                     */
-
-                    TrafficGenerator.FisherYates(graph, 1.0, trafficStore);
+                    TrafficGenerator.fromFileLinebyLine(graph, trafficStore, trafficNo, 1, false,
+                            "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                                    "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
+                                    ".csv");
 
 
                     for (int combSize = minSize; combSize <= maxSize; combSize++) {
@@ -248,23 +265,24 @@ public class BruteForceCorrect {
                     System.out.println();
                     */
 
-                    //allBestCombinations.add(bestCombination);
-                    //numLocationsUsed.add(bestCombination.size());
+                    allBestCombinations.add(bestCombination);
+                    numLocationsUsed.add(bestCombination.size());
 
                     double currentBestTotalTraffic = Math.round(minCombination * 100.0) / 100.0;
                     double currentSyncTraffic = Math.round(bestSyncTraffic * 100.0) / 100.0;
                     double currentDataTraffic = currentBestTotalTraffic - currentSyncTraffic;
 
-                    //bestTraffic.add(Math.round(minCombination * 100.0) / 100.0);
-                    //syncTraffic.add(Math.round(bestSyncTraffic * 100.0) / 100.0);
-
+                    bestTraffic.add(Math.round(minCombination * 100.0) / 100.0);
+                    syncTraffic.add(Math.round(bestSyncTraffic * 100.0) / 100.0);
+                    /*
                     printWriterMap.get(alpha).println(
                             currentBestTotalTraffic + " "
                                     + currentDataTraffic + " "
                                     + currentSyncTraffic + " " +
                                     bestCombination.size()
                     );
-                    printWriterMap.get(alpha).flush();
+                    */
+                    //printWriterMap.get(alpha).flush();
 
                     currentCombination = 0;
                     minCombination = Integer.MAX_VALUE;
@@ -272,9 +290,9 @@ public class BruteForceCorrect {
 
                 }
 
-                //System.out.println("totalTraffic dataTraffic syncTraffic numCopiesUsed");
+                System.out.println("totalTraffic dataTraffic syncTraffic numCopiesUsed");
 
-                /*
+
                 for (int i = 0; i < bestTraffic.size(); i++) {
 
 
@@ -285,24 +303,14 @@ public class BruteForceCorrect {
                                     numLocationsUsed.get(i));
 
 
-                    printWriterMap.get(alpha).println(
-                            bestTraffic.get(i) + " "
-                                    + (bestTraffic.get(i) - syncTraffic.get(i)) + " "
-                                    + syncTraffic.get(i) + " " +
-                                    numLocationsUsed.get(i)
-                    );
-
-                    printWriterMap.get(alpha).flush();
-
                 }
 
-                */
 
             }
-        }
-        catch(IOException e){
-
-        }
+            //}
+            //catch(IOException e){
+            //
+            //}
 
         /*
         System.out.println("Best combinations: ");
@@ -319,12 +327,12 @@ public class BruteForceCorrect {
         */
 
 
-        //System.out.println(bestTraffic.toString());
-        //System.out.println(syncTraffic.toString());
-        //System.out.println("LocationsUsed: " + numLocationsUsed.toString());
+            //System.out.println(bestTraffic.toString());
+            //System.out.println(syncTraffic.toString());
+            //System.out.println("LocationsUsed: " + numLocationsUsed.toString());
 
-        double currentAlpha = alphaStart;
-        //System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
+            double currentAlpha = alphaStart;
+            //System.out.println("alpha totalTraffic dataTraffic syncTraffic numCopiesUsed");
         /*
         for(int i=0 ; i<bestTraffic.size() ; i++){
             System.out.println(Math.round(currentAlpha*100000)/100000.0 + " "
@@ -345,6 +353,8 @@ public class BruteForceCorrect {
             currentAlpha+=alphaInterval;
         }
         */
+
+        }
     }
 
     private static double getSyncTraffic(ArrayList<Vertex> vertices, ListGraph graph){

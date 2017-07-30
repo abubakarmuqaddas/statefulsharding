@@ -28,20 +28,21 @@ public class EvaluateTrafficHeuristicTabuSearch {
         LinkedList<String> result = new LinkedList<>();
 
 
-
+        /*
         int startSize = 3;
         int finalSize = 11;
-
-
-        //double p=0.5;
-
-        /*
-        int startSize = 12;
-        int finalSize = 120;
         */
 
+        //double p=0;
+        double p=0.5;
+
+
+        int startSize = 3;
+        int finalSize = 6;
+
+
         int startTraffic = 1;
-        int endTraffic = 1000;
+        int endTraffic = 100;
 
         int startCopies = 1;
         int endCopies = 3;
@@ -49,9 +50,9 @@ public class EvaluateTrafficHeuristicTabuSearch {
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
 
-        //double alpha = 0.25;
-        double alphaStart = 0.5;
-        double alphaEnd = 0.5;
+        double alphaStart = 0.0;
+        double alphaEnd = 1.0;
+        double alphaInterval = 0.25;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
 
@@ -68,13 +69,13 @@ public class EvaluateTrafficHeuristicTabuSearch {
            Generate files:
          */
 
-        try {
+        //try {
 
-            FileWriter logfw = new FileWriter("Tabu_manhattan.txt", true);
-            BufferedWriter logbw = new BufferedWriter(logfw);
-            PrintWriter logout = new PrintWriter(logbw);
+            //FileWriter logfw = new FileWriter("Tabu_WS_randPerm_p_"+p+".txt", true);
+            //BufferedWriter logbw = new BufferedWriter(logfw);
+            //PrintWriter logout = new PrintWriter(logbw);
 
-            for (double alpha = alphaStart; alpha <= alphaEnd; alpha = alpha + 0.25) {
+            for (double alpha = alphaStart; alpha <= alphaEnd; alpha = alpha + alphaInterval) {
 
                 System.out.println("Alpha: " + alpha);
 
@@ -90,17 +91,21 @@ public class EvaluateTrafficHeuristicTabuSearch {
                     ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
 
+
+
+
+                //Watts Strogatz
+
                 /*
-                Watts Strogatz
-
-
 
                 String graphLocation = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                         "topologies_traffic/Traffic/WS_graph_" + p +
                         "/WS_graph" + size + "_" + p + "_8.csv";
                 ListGraph graph = LoadGraph.GraphParserJ(graphLocation, Integer.MAX_VALUE, true);
 
+
                 */
+
 
 
                     HashMap<Vertex, HashMap<Vertex, Integer>> dist =
@@ -112,31 +117,31 @@ public class EvaluateTrafficHeuristicTabuSearch {
                             ".csv";
 
 
+
+
                     for (int traffic = startTraffic; traffic <= endTraffic; traffic++) {
 
                         TrafficStore trafficStore = new TrafficStore();
 
-                    /*
+
                     TrafficGenerator.fromFileLinebyLine(
                             graph,
                             trafficStore,
                             traffic,
                             1,
-                            true,
+                            false,
                             trafficFile
                     );
-                    */
-
-                        TrafficGenerator.FisherYates(graph, 1.0, trafficStore);
-
                     /*
 
-                    TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, true,
+                    TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, false,
                             "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                                     "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
                                     ".csv");
 
                                     */
+
+
 
                         TrafficHeuristic trafficHeuristicSP = new TrafficHeuristic(graph,
                                 trafficStore,
@@ -158,7 +163,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
                             for (int partitionNum = startPartitionRuns; partitionNum <= endPartitionRuns; partitionNum++) {
 
-                                System.out.println("Partition num: " + partitionNum);
+                                //System.out.println("Partition num: " + partitionNum);
 
                                 HashMap<Vertex, ListGraph> partitions =
                                         Partitioning.EvolutionaryPartition(
@@ -296,7 +301,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
                     //System.out.println("Stats for size 3");
                     /*size copy0m copy0l copy0u copy1 copy2 copy3*/
 
-                    result.add(size + " " +
+                    result.add(size + " " + alpha + " " +
                             round2(copy0stats.getFirst()) + " " +
                             round2(copy0stats.getFirst() - copy0stats.getSecond()) + " " +
                             round2(copy0stats.getFirst() + copy0stats.getSecond()) + " " +
@@ -314,8 +319,8 @@ public class EvaluateTrafficHeuristicTabuSearch {
                             round2(copy3stats.getFirst() + copy3stats.getSecond()) + " "
                     );
 
-                    logout.println(
-                            size + " " +
+                    System.out.println(
+                            size + " " + alpha + " " +
                                     round2(copy0stats.getFirst()) + " " +
                                     round2(copy0stats.getFirst() - copy0stats.getSecond()) + " " +
                                     round2(copy0stats.getFirst() + copy0stats.getSecond()) + " " +
@@ -333,7 +338,8 @@ public class EvaluateTrafficHeuristicTabuSearch {
                                     round2(copy3stats.getFirst() + copy3stats.getSecond()) + " "
                     );
 
-                    logout.flush();
+
+
 
             /*
             System.out.println(
@@ -361,10 +367,10 @@ public class EvaluateTrafficHeuristicTabuSearch {
 
             }
 
-        }
-        catch(IOException e){
-            //
-        }
+        //}
+        //catch(IOException e){
+        //    //
+        //}
 
         for (String s : result) {
             System.out.println(s);
