@@ -124,14 +124,14 @@ public class EvaluateTrafficHeuristicTabuSearch {
                         TrafficStore trafficStore = new TrafficStore();
 
 
-                    TrafficGenerator.fromFileLinebyLine(
-                            graph,
-                            trafficStore,
-                            traffic,
-                            1,
-                            false,
-                            trafficFile
-                    );
+                        TrafficGenerator.fromFileLinebyLine(
+                                graph,
+                                trafficStore,
+                                traffic,
+                                1,
+                                false,
+                                trafficFile
+                        );
                     /*
 
                     TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, false,
@@ -275,7 +275,8 @@ public class EvaluateTrafficHeuristicTabuSearch {
                                         }
                                     }
                                     TrafficPartition.get(size).get(numCopies).add(bestTraffic);
-                                } else {
+                                }
+                                else {
                                     TrafficPartition.get(size).get(numCopies).add(trafficHeuristicPart.getTotalTraffic());
                                 }
 
