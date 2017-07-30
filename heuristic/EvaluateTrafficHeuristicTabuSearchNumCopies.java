@@ -31,15 +31,15 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
         //int startCopies = 7;
         //int endCopies = 7;
         int numCopies = 7;
-        double alphaStart = 0.0;
-        double alphaEnd = 1.0;
-        double alphaInterval = 0.25;
+        double alphaStart = 0.3;
+        double alphaEnd = 0.3;
+        double alphaInterval = 0.1;
         int startPartitionRuns = 1;
-        int endPartitionRuns = 1;
+        int endPartitionRuns = 10;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
         int startTraffic = 1;
-        int endTraffic = 10;
+        int endTraffic = 100;
 
 
         /* Size, CopyNum*/

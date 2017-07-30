@@ -208,11 +208,16 @@ public class TrafficHeuristic{
             //System.out.println("Routing" + trafficDemand.getSource().getLabel() + " -> "
             // + trafficDemand.getDestination().getLabel());
             if(this.heuristicType==hType.shortestpath){
-                Path path = ShortestPath.dijsktra(graph, trafficDemand.getSource(), trafficDemand.getDestination());
-                if (path == null)
-                    routingSolution.put(trafficDemand, null);
-                else
-                    routingSolution.put(trafficDemand, path);
+                try {
+                    Path path = ShortestPath.dijsktra(graph, trafficDemand.getSource(), trafficDemand.getDestination());
+                    if (path == null)
+                        routingSolution.put(trafficDemand, null);
+                    else
+                        routingSolution.put(trafficDemand, path);
+                }
+                catch(NullPointerException e){
+                    int d=1;
+                }
             }
             else {
                 Path path = RouteThroughState.route(graph, trafficDemand, copies, multipleStates);
