@@ -37,7 +37,7 @@ public class EvaluateTrafficHeuristicTabuSearch {
         double p=0.1;
 
         int startSize = 3;
-        int finalSize = 11;
+        int finalSize = 6;
 
         int startTraffic = 1;
         int endTraffic = 10;
@@ -51,8 +51,8 @@ public class EvaluateTrafficHeuristicTabuSearch {
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
 
-        double alphaStart = 0.5;
-        double alphaEnd = 0.5;
+        double alphaStart = 0.0;
+        double alphaEnd = 1.0;
         double alphaInterval = 0.25;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
@@ -134,11 +134,17 @@ public class EvaluateTrafficHeuristicTabuSearch {
                             */
 
 
-
+                            /*
                             TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, false,
                             "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
                                     "topologies_traffic/Traffic/WS_Traffic/WS_Traffic_halfPerm_" + size +
                                     ".csv");
+                                    */
+
+                            TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, false,
+                                    "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/" +
+                                            "topologies_traffic/Traffic/WS_Traffic/WS_Traffic" + size +
+                                            ".csv");
 
 
                             TrafficHeuristic trafficHeuristicSP = new TrafficHeuristic(graph,

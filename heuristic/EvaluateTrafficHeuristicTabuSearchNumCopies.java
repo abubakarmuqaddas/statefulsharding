@@ -13,6 +13,7 @@ import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
+import javax.xml.crypto.Data;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,19 +28,19 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
 
     public static void main(String[] args){
 
-        int size = 7;
+        int size = 5;
         //int startCopies = 7;
         //int endCopies = 7;
-        int numCopies = 7;
-        double alphaStart = 0.3;
-        double alphaEnd = 0.3;
+        int numCopies = 10;
+        double alphaStart = 0.0;
+        double alphaEnd = 0.0;
         double alphaInterval = 0.1;
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
         int tabuRunStart = 1;
         int tabuRunFinish = 500;
         int startTraffic = 1;
-        int endTraffic = 100;
+        int endTraffic = 10;
 
 
         /* Size, CopyNum*/
@@ -172,12 +173,22 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
                         if (currentTraffic <= bestTraffic) {
                             bestTraffic = currentTraffic;
                             bestDataTraffic = afterDataRouted.getFirst();
-                            bestSyncTraffic = syncTraffic;
+                            bestSyncTraffic = alpha*syncTraffic;
+
+                            if(bestDataTraffic<10.0){
+                                int d=1;
+                            }
+
+
+
                         }
                         else {
                             sortedVertices.set(targetVertexNo, targetVertex);
                         }
                     }
+
+
+
 
                     TotalTraffic.get(alpha).add(bestTraffic);
                     DataTraffic.get(alpha).add(bestDataTraffic);
@@ -195,6 +206,19 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
 
         for(double alpha = alphaStart ; alpha<=alphaEnd ; alpha+=alphaInterval) {
 
+            for(int i=0 ; i<TotalTraffic.get(alpha).size() ; i++){
+                //System.out.println(TotalTraffic.get(alpha).get(i) + " " + DataTraffic.get(alpha).get(i) +
+                //", " + (TotalTraffic.get(alpha).get(i)-DataTraffic.get(alpha).get(i)));
+
+                if(DataTraffic.get(alpha).get(i)<1.0){
+                    TotalTraffic.get(alpha).remove(i);
+                    DataTraffic.get(alpha).remove(i);
+                    SyncTraffic.get(alpha).remove(i);
+                }
+
+
+            }
+
             Collection<Double> totalTraffic = TotalTraffic.get(alpha);
             Collection<Double> dataTraffic = DataTraffic.get(alpha);
             Collection<Double> syncTraffic = SyncTraffic.get(alpha);
@@ -207,21 +231,18 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
 
             System.out.println(
                     alpha + " " +
-                            totalTrafficStats.getFirst() + " " +
-                            (totalTrafficStats.getFirst()-totalTrafficStats.getSecond()) + " " +
-                            (totalTrafficStats.getFirst()+totalTrafficStats.getSecond()) + " " +
-                            dataTrafficStats.getFirst() + " " +
-                            (dataTrafficStats.getFirst()-dataTrafficStats.getSecond()) + " " +
-                            (dataTrafficStats.getFirst()+dataTrafficStats.getSecond()) + " " +
-                            syncTrafficStats.getFirst() + " " +
-                            (syncTrafficStats.getFirst()-syncTrafficStats.getSecond()) + " " +
-                            (syncTrafficStats.getFirst()+syncTrafficStats.getSecond()) + " " +
-                            copyStats.getFirst() + " " +
-                            (copyStats.getFirst()-copyStats.getSecond()) + " " +
-                            (copyStats.getFirst()+copyStats.getSecond())
-
-
-
+                            round2(totalTrafficStats.getFirst()) + " " +
+                            round2(totalTrafficStats.getFirst()-totalTrafficStats.getSecond()) + " " +
+                            round2(totalTrafficStats.getFirst()+totalTrafficStats.getSecond()) + " " +
+                            round2(dataTrafficStats.getFirst()) + " " +
+                            round2(dataTrafficStats.getFirst()-dataTrafficStats.getSecond()) + " " +
+                            round2(dataTrafficStats.getFirst()+dataTrafficStats.getSecond()) + " " +
+                            round2(syncTrafficStats.getFirst()) + " " +
+                            round2(syncTrafficStats.getFirst()-syncTrafficStats.getSecond()) + " " +
+                            round2(syncTrafficStats.getFirst()+syncTrafficStats.getSecond()) + " " +
+                            round2(copyStats.getFirst()) + " " +
+                            round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
+                            round2(copyStats.getFirst()+copyStats.getSecond())
             );
 
 
@@ -434,6 +455,10 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
         double dev = Math.sqrt(num/values.size());
 
         return new Pair<>(mean, (dev*1.96)/Math.sqrt(values.size()));
+    }
+
+    private static double round2(double number){
+        return Math.round((number*100.0))/100.0;
     }
 
 
