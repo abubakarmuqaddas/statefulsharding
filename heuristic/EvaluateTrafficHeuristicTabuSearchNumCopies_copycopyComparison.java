@@ -1,40 +1,31 @@
 package statefulsharding.heuristic;
 
-import com.sun.corba.se.impl.orbutil.concurrent.Sync;
 import statefulsharding.MapUtils;
 import statefulsharding.Pair;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
-import statefulsharding.graph.LoadGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.graph.algorithms.ShortestPath;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
-import javax.xml.crypto.Data;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static statefulsharding.heuristic.TrafficHeuristic.hType.fixedcopies;
-import static statefulsharding.heuristic.TrafficHeuristic.hType.shortestpath;
-
-public class EvaluateTrafficHeuristicTabuSearchNumCopies {
+public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
 
     public static void main(String[] args){
 
-        int size = 5;
-        //int startCopies = 7;
-        //int endCopies = 7;
-        int numCopies = 15;
-        double alphaStart = 0.0;
+        int size = 7;
+        int startCopies = 1;
+        int endCopies = 15;
+        //int numCopies = 15;
+        double alphaStart = 1.0;
         double alphaEnd = 1.0;
         double alphaInterval = 0.1;
+        double alpha = 1.0;
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
         int tabuRunStart = 1;
@@ -44,10 +35,10 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
 
 
         /* Size, CopyNum*/
-        HashMap<Double, ArrayList<Double>> TotalTraffic = new HashMap<>();
-        HashMap<Double, ArrayList<Double>> DataTraffic = new HashMap<>();
-        HashMap<Double, ArrayList<Double>> SyncTraffic = new HashMap<>();
-        HashMap<Double, ArrayList<Double>> copiesUsed = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> TotalTraffic = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> DataTraffic = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> SyncTraffic = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> copiesUsed = new HashMap<>();
         //HashMap<Integer, HashMap<Integer, Double>> TrafficShortestPath = new HashMap<>();
 
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, Integer.MAX_VALUE,
@@ -61,14 +52,17 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
                 "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
                 ".csv";
 
-        for(double alpha = alphaStart ; alpha<=alphaEnd ; alpha+=alphaInterval) {
+        //for(double alpha = alphaStart ; alpha<=alphaEnd ; alpha+=alphaInterval) {
+
+        for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
+
 
             System.out.println("Alpha: " + alpha);
 
-            TotalTraffic.put(alpha, new ArrayList<>());
-            DataTraffic.put(alpha, new ArrayList<>());
-            SyncTraffic.put(alpha, new ArrayList<>());
-            copiesUsed.put(alpha, new ArrayList<>());
+            TotalTraffic.put(numCopies, new ArrayList<>());
+            DataTraffic.put(numCopies, new ArrayList<>());
+            SyncTraffic.put(numCopies, new ArrayList<>());
+            copiesUsed.put(numCopies, new ArrayList<>());
 
             for (int traffic = startTraffic; traffic <= endTraffic; traffic++) {
 
@@ -121,79 +115,84 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
                     double bestDataTraffic=0.0;
 
 
-                    for (int tabuRun = tabuRunStart; tabuRun <= tabuRunFinish; tabuRun++) {
+                    if (numCopies != 1) {
+                        for (int tabuRun = tabuRunStart; tabuRun <= tabuRunFinish; tabuRun++) {
 
-                        int targetVertexNo = 0;
-                        Vertex targetVertex = null;
+                            int targetVertexNo = 0;
+                            Vertex targetVertex = null;
 
-                        int j = 0;
-                        int numSuccessors = 0;
-                        for (Vertex vertex : sortedVertices) {
-                            numSuccessors += graph.getSuccessors(vertex).size();
-                        }
+                            int j = 0;
+                            int numSuccessors = 0;
+                            for (Vertex vertex : sortedVertices) {
+                                numSuccessors += graph.getSuccessors(vertex).size();
+                            }
 
-                        while (listContainsSol(checkedVertices, sortedVertices) && j <= numSuccessors) {
+                            while (listContainsSol(checkedVertices, sortedVertices) && j <= numSuccessors) {
 
                             /*
                             Pick the random vertex to move
                             */
 
-                            targetVertexNo = ThreadLocalRandom.current().nextInt(0, numCopies);
-                            targetVertex = sortedVertices.get(targetVertexNo);
+                                targetVertexNo = ThreadLocalRandom.current().nextInt(0, numCopies);
+                                targetVertex = sortedVertices.get(targetVertexNo);
 
                             /*
                                 Get all successors
                              */
 
-                            LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
-                            if (successors.contains(targetVertex))
-                                successors.remove(targetVertex);
+                                LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
+                                if (successors.contains(targetVertex))
+                                    successors.remove(targetVertex);
 
                             /*
                                 Pick one successor randomly
                              */
 
-                            int newTargetVertexNo = ThreadLocalRandom.current().nextInt(0, successors.size());
-                            Vertex newTargetVertex = successors.get(newTargetVertexNo);
+                                int newTargetVertexNo = ThreadLocalRandom.current().nextInt(0, successors.size());
+                                Vertex newTargetVertex = successors.get(newTargetVertexNo);
 
                             /*
                                 Generate new vertices
                              */
 
-                            sortedVertices.set(targetVertexNo, newTargetVertex);
-                            j++;
-                        }
-                        checkedVertices.add(new ArrayList<>(sortedVertices));
-
-                        afterDataRouted = routeGetDataTraffic(sortedVertices, dist, trafficStore);
-                        syncTraffic = getSyncTraffic(afterDataRouted.getSecond(), graph);
-
-                        double currentTraffic = afterDataRouted.getFirst() + alpha * syncTraffic;
-
-                        if (currentTraffic <= bestTraffic) {
-                            bestTraffic = currentTraffic;
-                            bestDataTraffic = afterDataRouted.getFirst();
-                            bestSyncTraffic = alpha*syncTraffic;
-
-                            if(bestDataTraffic<10.0){
-                                int d=1;
+                                sortedVertices.set(targetVertexNo, newTargetVertex);
+                                j++;
                             }
+                            checkedVertices.add(new ArrayList<>(sortedVertices));
+
+                            afterDataRouted = routeGetDataTraffic(sortedVertices, dist, trafficStore);
+                            syncTraffic = getSyncTraffic(afterDataRouted.getSecond(), graph);
+
+                            double currentTraffic = afterDataRouted.getFirst() + alpha * syncTraffic;
+
+                            if (currentTraffic <= bestTraffic) {
+                                bestTraffic = currentTraffic;
+                                bestDataTraffic = afterDataRouted.getFirst();
+                                bestSyncTraffic = alpha * syncTraffic;
+
+                                if (bestDataTraffic < 10.0) {
+                                    int d = 1;
+                                }
 
 
-
+                            } else {
+                                sortedVertices.set(targetVertexNo, targetVertex);
+                            }
                         }
-                        else {
-                            sortedVertices.set(targetVertexNo, targetVertex);
-                        }
+                    }
+                    else{
+                        bestTraffic = afterDataRouted.getFirst();
+                        bestDataTraffic = bestTraffic;
+                        bestSyncTraffic = 0.0;
                     }
 
 
 
 
-                    TotalTraffic.get(alpha).add(bestTraffic);
-                    DataTraffic.get(alpha).add(bestDataTraffic);
-                    SyncTraffic.get(alpha).add(bestSyncTraffic);
-                    copiesUsed.get(alpha).add((double)afterDataRouted.getSecond().size());
+                    TotalTraffic.get(numCopies).add(bestTraffic);
+                    DataTraffic.get(numCopies).add(bestDataTraffic);
+                    SyncTraffic.get(numCopies).add(bestSyncTraffic);
+                    copiesUsed.get(numCopies).add((double)afterDataRouted.getSecond().size());
 
                 }
 
@@ -202,27 +201,24 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
 
                 trafficStore.clear();
             }
-        }
 
-        for(double alpha = alphaStart ; alpha<=alphaEnd ; alpha+=alphaInterval) {
-
-            for(int i=0 ; i<TotalTraffic.get(alpha).size() ; i++){
+            for(int i=0 ; i<TotalTraffic.get(numCopies).size() ; i++){
                 //System.out.println(TotalTraffic.get(alpha).get(i) + " " + DataTraffic.get(alpha).get(i) +
                 //", " + (TotalTraffic.get(alpha).get(i)-DataTraffic.get(alpha).get(i)));
 
-                if(DataTraffic.get(alpha).get(i)<1.0){
-                    TotalTraffic.get(alpha).remove(i);
-                    DataTraffic.get(alpha).remove(i);
-                    SyncTraffic.get(alpha).remove(i);
+                if(DataTraffic.get(numCopies).get(i)<1.0){
+                    TotalTraffic.get(numCopies).remove(i);
+                    DataTraffic.get(numCopies).remove(i);
+                    SyncTraffic.get(numCopies).remove(i);
                 }
 
 
             }
 
-            Collection<Double> totalTraffic = TotalTraffic.get(alpha);
-            Collection<Double> dataTraffic = DataTraffic.get(alpha);
-            Collection<Double> syncTraffic = SyncTraffic.get(alpha);
-            Collection<Double> copies = copiesUsed.get(alpha);
+            Collection<Double> totalTraffic = TotalTraffic.get(numCopies);
+            Collection<Double> dataTraffic = DataTraffic.get(numCopies);
+            Collection<Double> syncTraffic = SyncTraffic.get(numCopies);
+            Collection<Double> copies = copiesUsed.get(numCopies);
 
             Pair<Double, Double> totalTrafficStats = interval(totalTraffic);
             Pair<Double, Double> dataTrafficStats = interval(dataTraffic);
@@ -230,19 +226,63 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies {
             Pair<Double, Double> copyStats = interval(copies);
 
             System.out.println(
-                    alpha + " " +
+                    numCopies + " " +
                             round2(totalTrafficStats.getFirst()) + " " +
-                            round2(totalTrafficStats.getFirst()-totalTrafficStats.getSecond()) + " " +
-                            round2(totalTrafficStats.getFirst()+totalTrafficStats.getSecond()) + " " +
+                            //round2(totalTrafficStats.getFirst()-totalTrafficStats.getSecond()) + " " +
+                            //round2(totalTrafficStats.getFirst()+totalTrafficStats.getSecond()) + " " +
                             round2(dataTrafficStats.getFirst()) + " " +
-                            round2(dataTrafficStats.getFirst()-dataTrafficStats.getSecond()) + " " +
-                            round2(dataTrafficStats.getFirst()+dataTrafficStats.getSecond()) + " " +
+                            //round2(dataTrafficStats.getFirst()-dataTrafficStats.getSecond()) + " " +
+                            //round2(dataTrafficStats.getFirst()+dataTrafficStats.getSecond()) + " " +
                             round2(syncTrafficStats.getFirst()) + " " +
-                            round2(syncTrafficStats.getFirst()-syncTrafficStats.getSecond()) + " " +
-                            round2(syncTrafficStats.getFirst()+syncTrafficStats.getSecond()) + " " +
-                            round2(copyStats.getFirst()) + " " +
-                            round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
-                            round2(copyStats.getFirst()+copyStats.getSecond())
+                            //round2(syncTrafficStats.getFirst()-syncTrafficStats.getSecond()) + " " +
+                            //round2(syncTrafficStats.getFirst()+syncTrafficStats.getSecond()) + " " +
+                            round2(copyStats.getFirst()) //+ " " +
+                    //round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
+                    //round2(copyStats.getFirst()+copyStats.getSecond())
+            );
+
+
+        }
+
+        for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
+
+            for(int i=0 ; i<TotalTraffic.get(numCopies).size() ; i++){
+                //System.out.println(TotalTraffic.get(alpha).get(i) + " " + DataTraffic.get(alpha).get(i) +
+                //", " + (TotalTraffic.get(alpha).get(i)-DataTraffic.get(alpha).get(i)));
+
+                if(DataTraffic.get(numCopies).get(i)<1.0){
+                    TotalTraffic.get(numCopies).remove(i);
+                    DataTraffic.get(numCopies).remove(i);
+                    SyncTraffic.get(numCopies).remove(i);
+                }
+
+
+            }
+
+            Collection<Double> totalTraffic = TotalTraffic.get(numCopies);
+            Collection<Double> dataTraffic = DataTraffic.get(numCopies);
+            Collection<Double> syncTraffic = SyncTraffic.get(numCopies);
+            Collection<Double> copies = copiesUsed.get(numCopies);
+
+            Pair<Double, Double> totalTrafficStats = interval(totalTraffic);
+            Pair<Double, Double> dataTrafficStats = interval(dataTraffic);
+            Pair<Double, Double> syncTrafficStats = interval(syncTraffic);
+            Pair<Double, Double> copyStats = interval(copies);
+
+            System.out.println(
+                    numCopies + " " +
+                            round2(totalTrafficStats.getFirst()) + " " +
+                            //round2(totalTrafficStats.getFirst()-totalTrafficStats.getSecond()) + " " +
+                            //round2(totalTrafficStats.getFirst()+totalTrafficStats.getSecond()) + " " +
+                            round2(dataTrafficStats.getFirst()) + " " +
+                            //round2(dataTrafficStats.getFirst()-dataTrafficStats.getSecond()) + " " +
+                            //round2(dataTrafficStats.getFirst()+dataTrafficStats.getSecond()) + " " +
+                            round2(syncTrafficStats.getFirst()) + " " +
+                            //round2(syncTrafficStats.getFirst()-syncTrafficStats.getSecond()) + " " +
+                            //round2(syncTrafficStats.getFirst()+syncTrafficStats.getSecond()) + " " +
+                            round2(copyStats.getFirst()) //+ " " +
+                            //round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
+                            //round2(copyStats.getFirst()+copyStats.getSecond())
             );
 
 
