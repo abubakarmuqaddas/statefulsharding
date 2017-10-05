@@ -65,7 +65,7 @@ public class LoadGraph {
                 if (!graph.checkVertex(destination))
                     graph.addVertex(destination);
 
-                graph.insertEdge(source,destination,capacity);
+                graph.insertDoubleEdge(source,destination,capacity);
 
             }
             in.close();

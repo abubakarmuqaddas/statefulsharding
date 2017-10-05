@@ -4,6 +4,7 @@ import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
+import statefulsharding.graph.LoadGraph;
 import statefulsharding.graph.Path;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
@@ -25,6 +26,7 @@ public class TestingClass {
 
     public static void main(String[] args){
 
+        /*
         HashMap<Integer, Integer> values= new HashMap<>();
 
         values.put(1,2);
@@ -38,6 +40,19 @@ public class TestingClass {
 
         System.out.println("Key");
         newValues.keySet().forEach(integer -> System.out.println(integer));
+        */
+
+        String initial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/topologies_traffic/zoo/";
+
+        for(int i=1 ; i<=100 ; i++) {
+
+            ListGraph graph = LoadGraph.GraphParserJ(initial +
+                    i + ".txt", Integer.MAX_VALUE, false);
+
+            System.out.println(graph.getNumVertices() + " " + graph.getNumEdges() );
+
+        }
+
 
 
 
