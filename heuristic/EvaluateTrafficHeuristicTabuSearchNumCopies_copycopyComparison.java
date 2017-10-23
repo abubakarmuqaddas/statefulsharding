@@ -376,7 +376,7 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
                 Vertex targetVertex = null;
 
                 if (minDistVertices.size() > 1) {
-                    int d=1;
+
                     for (Vertex vertex : minDistVertices) {
                         try {
                             if (usage.get(vertex) > currentUsage) {

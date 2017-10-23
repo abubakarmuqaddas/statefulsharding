@@ -538,8 +538,6 @@ public class Centrality {
 
         double temp;
 
-        int numVertices = graph.getNumVertices();
-
         HashMap<Vertex, Double> betCen = new HashMap<>();
         graph.getVertices().forEach(vertex -> {
             betCen.put(vertex,0.0);
