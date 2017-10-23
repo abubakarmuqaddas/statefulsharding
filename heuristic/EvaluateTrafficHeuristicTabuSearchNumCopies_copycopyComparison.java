@@ -9,6 +9,7 @@ import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.graph.algorithms.ShortestPath;
+import statefulsharding.graph.algorithms.StatAlgorithms;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.*;
@@ -220,10 +221,10 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
             Collection<Double> syncTraffic = SyncTraffic.get(numCopies);
             Collection<Double> copies = copiesUsed.get(numCopies);
 
-            Pair<Double, Double> totalTrafficStats = interval(totalTraffic);
-            Pair<Double, Double> dataTrafficStats = interval(dataTraffic);
-            Pair<Double, Double> syncTrafficStats = interval(syncTraffic);
-            Pair<Double, Double> copyStats = interval(copies);
+            Pair<Double, Double> totalTrafficStats = StatAlgorithms.ConfIntervals(totalTraffic,95);
+            Pair<Double, Double> dataTrafficStats = StatAlgorithms.ConfIntervals(dataTraffic,95);
+            Pair<Double, Double> syncTrafficStats = StatAlgorithms.ConfIntervals(syncTraffic,95);
+            Pair<Double, Double> copyStats = StatAlgorithms.ConfIntervals(copies,95);
 
             System.out.println(
                     numCopies + " " +
@@ -264,10 +265,10 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
             Collection<Double> syncTraffic = SyncTraffic.get(numCopies);
             Collection<Double> copies = copiesUsed.get(numCopies);
 
-            Pair<Double, Double> totalTrafficStats = interval(totalTraffic);
-            Pair<Double, Double> dataTrafficStats = interval(dataTraffic);
-            Pair<Double, Double> syncTrafficStats = interval(syncTraffic);
-            Pair<Double, Double> copyStats = interval(copies);
+            Pair<Double, Double> totalTrafficStats = StatAlgorithms.ConfIntervals(totalTraffic,95);
+            Pair<Double, Double> dataTrafficStats = StatAlgorithms.ConfIntervals(dataTraffic,95);
+            Pair<Double, Double> syncTrafficStats = StatAlgorithms.ConfIntervals(syncTraffic,95);
+            Pair<Double, Double> copyStats = StatAlgorithms.ConfIntervals(copies,95);
 
             System.out.println(
                     numCopies + " " +
@@ -284,15 +285,7 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
                             //round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
                             //round2(copyStats.getFirst()+copyStats.getSecond())
             );
-
-
         }
-
-
-
-
-
-
     }
 
     private static double getSyncTraffic(ArrayList<Vertex> vertices, ListGraph graph){
@@ -475,26 +468,6 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
         }
 
         return currentIter;
-    }
-
-    private static Pair<Double, Double> interval(Collection<Double> values){
-        double sum = 0.0;
-        double num = 0.0;
-
-        for(Double d : values){
-            sum+=d;
-        }
-
-        double mean = sum/values.size();
-
-        for(Double d : values){
-            double numi = Math.pow(d-mean,2);
-            num+=numi;
-        }
-
-        double dev = Math.sqrt(num/values.size());
-
-        return new Pair<>(mean, (dev*1.96)/Math.sqrt(values.size()));
     }
 
     private static double round2(double number){

@@ -27,30 +27,37 @@ public class TestingClass {
 
     public static void main(String[] args) {
 
-        int size = 5;
+        for(int size=10 ; size<=10 ; size++) {
 
-        ManhattanGraphGen m = new ManhattanGraphGen(size,Integer.MAX_VALUE,
-                ManhattanGraphGen.mType.UNWRAPPED, false, true);
+            ManhattanGraphGen m = new ManhattanGraphGen(size, Integer.MAX_VALUE,
+                    ManhattanGraphGen.mType.UNWRAPPED, false, true);
 
-        ListGraph graph = m.getManhattanGraph();
+            ListGraph graph = m.getManhattanGraph();
 
-        HashMap<Vertex, ListGraph> partitions =
-                Partitioning.EvolutionaryPartition(
-                        graph,
-                        2,
-                        50,
-                        "random",
-                        "betweenness",
-                        null,
-                        false,
-                        false,
-                        null
-                );
+            for(int numCopies = 10 ; numCopies<=10 ; numCopies++) {
 
-        ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
+                for(int partitionRun = 10 ; partitionRun<=10 ; partitionRun++) {
 
-        for (Vertex sortedVertex : sortedVertices) {
-            System.out.println(sortedVertex.getLabel());
+                    System.out.println("Size: " + size + ", NumCopy: " + numCopies + ", Partition: " + partitionRun);
+
+                    String PartitionFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
+                                            "MANHATTAN-UNWRAPPED-Partitions/" +
+                                            "MANHATTAN-UNWRAPPED-Partitions_Size_" + size +
+                                            "_NumCopies_" + numCopies + "_PartitionRun_" + partitionRun;
+
+                    ArrayList<Vertex> copies = Partitioning.getCopies(graph,PartitionFile,false);
+
+                    for (Vertex copy : copies) {
+                        System.out.println(copy.getLabel());
+                    }
+
+
+                }
+
+
+            }
+
+
         }
 
 
