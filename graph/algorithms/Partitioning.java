@@ -161,8 +161,6 @@ public class Partitioning {
                     if (writeGraph)
                         writePartitionGraph(graph, subGraphs, numParts, leaders,
                                 "analysis/partitioning/testGraph_" + initialMethod + "partition.dot");
-                    if (writePartition)
-                        writePartitions(leaders, filename);
                     break;
                 }
                 else {
@@ -194,6 +192,9 @@ public class Partitioning {
             leaders.add(graph.getVertex(sortedVertices.get(betCen.size() - 1).getLabel()));
             Partitions.put(graph.getVertex(sortedVertices.get(betCen.size() - 1).getLabel()), graph);
         }
+
+        if (writePartition)
+            writePartitions(leaders, filename);
 
         return Partitions;
     }

@@ -18,6 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 import static statefulsharding.heuristic.TrafficHeuristic.hType.fixedcopies;
@@ -27,37 +28,12 @@ public class TestingClass {
 
     public static void main(String[] args) {
 
-        for(int size=10 ; size<=10 ; size++) {
+        long seed = 17092011;
 
-            ManhattanGraphGen m = new ManhattanGraphGen(size, Integer.MAX_VALUE,
-                    ManhattanGraphGen.mType.UNWRAPPED, false, true);
+        Random rand = new Random(seed);
 
-            ListGraph graph = m.getManhattanGraph();
-
-            for(int numCopies = 10 ; numCopies<=10 ; numCopies++) {
-
-                for(int partitionRun = 10 ; partitionRun<=10 ; partitionRun++) {
-
-                    System.out.println("Size: " + size + ", NumCopy: " + numCopies + ", Partition: " + partitionRun);
-
-                    String PartitionFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
-                                            "MANHATTAN-UNWRAPPED-Partitions/" +
-                                            "MANHATTAN-UNWRAPPED-Partitions_Size_" + size +
-                                            "_NumCopies_" + numCopies + "_PartitionRun_" + partitionRun;
-
-                    ArrayList<Vertex> copies = Partitioning.getCopies(graph,PartitionFile,false);
-
-                    for (Vertex copy : copies) {
-                        System.out.println(copy.getLabel());
-                    }
-
-
-                }
-
-
-            }
-
-
+        for(int i=1 ; i<=10 ; i++) {
+            System.out.println(rand.nextInt(6));
         }
 
 

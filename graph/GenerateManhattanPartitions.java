@@ -10,21 +10,21 @@ public class GenerateManhattanPartitions {
 
     public static void main(String[] args) {
 
-        for (int size = 5; size <= 10; size++) {
+        for (int size = 3; size <= 10; size++) {
 
             ManhattanGraphGen m = new ManhattanGraphGen(size, Integer.MAX_VALUE,
                     ManhattanGraphGen.mType.UNWRAPPED, false, true);
 
             ListGraph graph = m.getManhattanGraph();
 
-            for (int numCopies = 1; numCopies <= 16; numCopies++) {
+            for (int numCopies = 1; numCopies <= 1; numCopies++) {
 
                 for (int partitionRun = 1; partitionRun <= 100; partitionRun++) {
 
                     HashMap<Vertex, ListGraph> partitions =
                             Partitioning.EvolutionaryPartition(
                                     graph,
-                                    3,
+                                    numCopies,
                                     50,
                                     "random",
                                     "betweenness",
