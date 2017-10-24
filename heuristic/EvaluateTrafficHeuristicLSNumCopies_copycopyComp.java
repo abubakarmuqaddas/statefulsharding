@@ -15,7 +15,7 @@ import statefulsharding.randomgraphgen.ManhattanGraphGen;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
+public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp {
 
     public static void main(String[] args){
 
@@ -25,20 +25,18 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
 
         int size = 5;
         int startCopies = 1;
-        int endCopies = 5;
+        int endCopies = 10;
         //int numCopies = 15;
         double alphaStart = 1.0;
         double alphaEnd = 1.0;
         double alphaInterval = 0.1;
-        double alpha = 0.5;
+        double alpha = 0.50;
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
         int lsOuterStart = 1;
-        int lsOuterFinish = 10;
-        int lsInnerStart = 1;
-        int lsInnerFinish = 500;
+        int lsOuterFinish = 100;
         int startTraffic = 1;
-        int endTraffic = 10;
+        int endTraffic = 10 ;
 
 
         /* Size, CopyNum*/
@@ -114,10 +112,9 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
 
                     //ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
 
-                    ArrayList<Vertex> sortedVertices = Partitioning.getCopies(graph,PartitionFile,false);
-
                     for(int lsOuter = lsOuterStart ; lsOuter<=lsOuterFinish ; lsOuter++) {
 
+                        ArrayList<Vertex> sortedVertices = Partitioning.getCopies(graph,PartitionFile,false);
 
                         LinkedList<ArrayList<Vertex>> checkedVertices = new LinkedList<>();
 
@@ -135,68 +132,84 @@ public class EvaluateTrafficHeuristicTabuSearchNumCopies_copycopyComparison {
                         double bestDataTraffic = afterDataRouted.getFirst();
 
                         if (numCopies != 1) {
-                            for (int lsInner = lsInnerStart; lsInner <= lsInnerFinish;
-                                 lsInner++) {
+                            int targetVertexNo = 0;
+                            Vertex targetVertex = null;
 
-                                int targetVertexNo = 0;
-                                Vertex targetVertex = null;
-
-                                int j = 0;
-                                int numSuccessors = 0;
-                                for (Vertex vertex : sortedVertices) {
-                                    numSuccessors += graph.getSuccessors(vertex).size();
-                                }
-
-                                while (listContainsSol(checkedVertices, sortedVertices) && j <= numSuccessors) {
-
-                                    /*
-                                    Pick the random vertex to move
-                                    */
-
-                                    //targetVertexNo = ThreadLocalRandom.current().nextInt(0, numCopies);
-                                    targetVertexNo = rand.nextInt(numCopies - 1);
-                                    targetVertex = sortedVertices.get(targetVertexNo);
-
-                                    /*
-                                        Get all successors
-                                     */
-
-                                    LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
-                                    if (successors.contains(targetVertex))
-                                        successors.remove(targetVertex);
-
-                                    /*
-                                        Pick one successor randomly
-                                     */
-
-                                    //int newTargetVertexNo = ThreadLocalRandom.current().nextInt(0, successors.size());
-                                    int newTargetVertexNo = rand.nextInt(successors.size() - 1);
-                                    Vertex newTargetVertex = successors.get(newTargetVertexNo);
-
-                                    /*
-                                        Generate new vertices
-                                     */
-
-                                    sortedVertices.set(targetVertexNo, newTargetVertex);
-                                    j++;
-                                }
-
-                                checkedVertices.add(new ArrayList<>(sortedVertices));
-
-                                afterDataRouted = routeGetDataTraffic(sortedVertices, dist, trafficStore);
-                                syncTraffic = getSyncTraffic(afterDataRouted.getSecond(), graph);
-
-                                double currentTraffic = afterDataRouted.getFirst() + alpha * syncTraffic;
-
-                                if (currentTraffic < bestTraffic) {
-                                    bestTraffic = currentTraffic;
-                                    bestDataTraffic = afterDataRouted.getFirst();
-                                    bestSyncTraffic = alpha * syncTraffic;
-                                }
-                                else {
-                                    sortedVertices.set(targetVertexNo, targetVertex);
-                                }
+                            int j = 0;
+                            int numSuccessors = 0;
+                            for (Vertex vertex : sortedVertices) {
+                                numSuccessors += graph.getSuccessors(vertex).size();
                             }
+
+                            while (listContainsSol(checkedVertices, sortedVertices) && j <= numSuccessors) {
+
+                                /*
+                                Pick the random vertex to move
+                                */
+
+                                //targetVertexNo = ThreadLocalRandom.current().nextInt(0, numCopies);
+                                targetVertexNo = rand.nextInt(numCopies - 1);
+                                targetVertex = sortedVertices.get(targetVertexNo);
+
+                                /*
+                                    Get all successors
+                                 */
+
+                                LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
+                                if (successors.contains(targetVertex))
+                                    successors.remove(targetVertex);
+
+                                /*
+                                    Pick one successor randomly
+                                 */
+
+                                //int newTargetVertexNo = ThreadLocalRandom.current().nextInt(0, successors.size());
+                                int newTargetVertexNo = rand.nextInt(successors.size() - 1);
+                                Vertex newTargetVertex = successors.get(newTargetVertexNo);
+
+                                /*
+                                    Move the picked vertex
+                                 */
+
+                                sortedVertices.set(targetVertexNo, newTargetVertex);
+                                j++;
+                            }
+
+                            checkedVertices.add(new ArrayList<>(sortedVertices));
+
+                            afterDataRouted = routeGetDataTraffic(sortedVertices, dist, trafficStore);
+                            syncTraffic = getSyncTraffic(afterDataRouted.getSecond(), graph);
+
+                            double currentTraffic = afterDataRouted.getFirst() + alpha * syncTraffic;
+
+                            /*
+                            System.out.println("OuterLs: " + lsOuter +
+                                    ", currentTraffic: " + currentTraffic + ", bestTraffic: " + bestDataTraffic +
+                                    ", j: " + j +
+                                    ", Vertices: ");
+                            for (Vertex sortedVertex : sortedVertices) {
+                                System.out.print(sortedVertex.getLabel() + " ");
+                            }
+                            System.out.println();
+                            */
+
+                            if (currentTraffic < bestTraffic) {
+                                /*
+                                System.out.println("This is better!!!!!!!!");
+                                for (Vertex sortedVertex : sortedVertices) {
+                                    System.out.print(sortedVertex.getLabel() + " ");
+                                }
+                                System.out.println();
+                                */
+
+                                bestTraffic = currentTraffic;
+                                bestDataTraffic = afterDataRouted.getFirst();
+                                bestSyncTraffic = alpha * syncTraffic;
+                            }
+                            else {
+                                sortedVertices.set(targetVertexNo, targetVertex);
+                            }
+
                         }
                         else {
                             bestTraffic = afterDataRouted.getFirst();

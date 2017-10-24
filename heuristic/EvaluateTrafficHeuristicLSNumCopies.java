@@ -24,7 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static statefulsharding.heuristic.TrafficHeuristic.hType.fixedcopies;
 import static statefulsharding.heuristic.TrafficHeuristic.hType.shortestpath;
 
-public class EvaluateTrafficHeuristicTabuSearchNumCopies {
+public class EvaluateTrafficHeuristicLSNumCopies {
 
     public static void main(String[] args){
 

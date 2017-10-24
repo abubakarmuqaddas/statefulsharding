@@ -53,4 +53,8 @@ public class StatAlgorithms {
 
     }
 
+    public static double round2(double number){
+        return Math.round((number*100.0))/100.0;
+    }
+
 }
