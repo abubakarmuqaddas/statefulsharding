@@ -136,4 +136,12 @@ public class ManhattanGraphGen{
         }
     }
 
+    public static ListGraph generateManhattanUnwrapped(int dimension, double capacity, boolean selfEdges){
+
+        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(dimension, capacity,
+                ManhattanGraphGen.mType.UNWRAPPED, false, selfEdges);
+        return manhattanGraphGen.getManhattanGraph();
+
+    }
+
 }

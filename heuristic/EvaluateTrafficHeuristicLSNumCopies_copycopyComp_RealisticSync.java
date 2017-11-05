@@ -26,8 +26,8 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
         //Random rand = new Random();
 
         int size = 5;
-        int startCopies = 2;
-        int endCopies = 2;
+        int startCopies = 4;
+        int endCopies = 4;
         //int numCopies = 15;
 
         int lsOuterStart = 1;
@@ -55,7 +55,6 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                 "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
                 ".csv";
 
-        //for(double alpha = alphaStart ; alpha<=alphaEnd ; alpha+=alphaInterval) {
 
         for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
 
@@ -64,6 +63,7 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
             DataTraffic.put(numCopies, new ArrayList<>());
             SyncTraffic.put(numCopies, new ArrayList<>());
             copiesUsed.put(numCopies, new ArrayList<>());
+
 
             for (int traffic = startTraffic; traffic <= endTraffic; traffic++) {
 
@@ -115,29 +115,20 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                             "_NumCopies_" + numCopies + "_PartitionRun_" + partitionNum;
 
 
-
-
-
                     for(int lsOuter = lsOuterStart ; lsOuter<=lsOuterFinish ; lsOuter++) {
 
                         ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
 
                         //ArrayList<Vertex> sortedVertices = Partitioning.getCopies(graph,PartitionFile,false);
 
-                        if(lsOuter == lsOuterStart){
-                            System.out.println("Start of LS: Path length is: " + ShortestPath
-                                    .dijsktra(graph,sortedVertices.get(0),sortedVertices.get(1))
-                                    .getSize());
-                            System.out.println("Vertices are: " + sortedVertices.get(0).getLabel() + " , " +
-                                    sortedVertices.get(1).getLabel());
-                        }
+                        ArrayList<Vertex> bestVertices = new ArrayList<>();
+
 
                         LinkedList<ArrayList<Vertex>> checkedVertices = new LinkedList<>();
+                        checkedVertices.add(new ArrayList<>(sortedVertices));
 
                         HashMap<Vertex, Integer> usage = new HashMap<>();
                         sortedVertices.forEach(vertex -> usage.put(vertex, 0));
-
-                        checkedVertices.add(new ArrayList<>(sortedVertices));
 
                         Pair<Pair<HashMap<TrafficDemand, Vertex>, Double>, ArrayList<Vertex>>
                                 afterDataRouted = routeGetDataTraffic(sortedVertices, dist, trafficStore);
@@ -147,6 +138,8 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                         double bestTraffic = afterDataRouted.getFirst().getSecond() + syncTraffic;
                         double bestSyncTraffic = syncTraffic;
                         double bestDataTraffic = afterDataRouted.getFirst().getSecond();
+                        bestVertices.addAll(afterDataRouted.getSecond());
+
 
                         if (numCopies != 1) {
                             int targetVertexNo = 0;
@@ -200,31 +193,15 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
 
                             double currentTraffic = afterDataRouted.getFirst().getSecond() + syncTraffic;
 
-                            /*
-                            System.out.println("OuterLs: " + lsOuter +
-                                    ", currentTraffic: " + currentTraffic + ", bestTraffic: " + bestDataTraffic +
-                                    ", j: " + j +
-                                    ", Vertices: ");
-                            for (Vertex sortedVertex : sortedVertices) {
-                                System.out.print(sortedVertex.getLabel() + " ");
-                            }
-                            System.out.println();
-                            */
 
                             if (currentTraffic < bestTraffic) {
-
-
-                                /*
-                                System.out.println("This is better!!!!!!!!");
-                                for (Vertex sortedVertex : sortedVertices) {
-                                    System.out.print(sortedVertex.getLabel() + " ");
-                                }
-                                System.out.println();
-                                */
 
                                 bestTraffic = currentTraffic;
                                 bestDataTraffic = afterDataRouted.getFirst().getSecond();
                                 bestSyncTraffic = syncTraffic;
+                                bestVertices.clear();
+                                bestVertices.addAll(afterDataRouted.getSecond());
+
                             }
                             else {
                                 sortedVertices.set(targetVertexNo, targetVertex);
@@ -240,12 +217,15 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                         TotalTraffic.get(numCopies).add(bestTraffic);
                         DataTraffic.get(numCopies).add(bestDataTraffic);
 
-                        System.out.println("Path length is: " + ShortestPath
-                                .dijsktra(graph,sortedVertices.get(0),sortedVertices.get(1))
-                                .getSize());
-
                         SyncTraffic.get(numCopies).add(bestSyncTraffic);
                         copiesUsed.get(numCopies).add((double) afterDataRouted.getSecond().size());
+
+                        if(afterDataRouted.getSecond().size()<4) {
+                            int d=1;
+                        }
+
+                        AvgPathLength.putIfAbsent(bestVertices.size(), new ArrayList<>());
+                        AvgPathLength.get(bestVertices.size()).add(getAveragePathLength(bestVertices,graph));
 
                     }
 
@@ -256,13 +236,12 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
             }
 
             for(int i=0 ; i<TotalTraffic.get(numCopies).size() ; i++){
-                //System.out.println(TotalTraffic.get(alpha).get(i) + " " + DataTraffic.get(alpha).get(i) +
-                //", " + (TotalTraffic.get(alpha).get(i)-DataTraffic.get(alpha).get(i)));
 
                 if(DataTraffic.get(numCopies).get(i)<1.0){
                     TotalTraffic.get(numCopies).remove(i);
                     DataTraffic.get(numCopies).remove(i);
                     SyncTraffic.get(numCopies).remove(i);
+                    AvgPathLength.get(numCopies).remove(i);
                 }
 
 
@@ -271,11 +250,13 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
             Collection<Double> totalTraffic = TotalTraffic.get(numCopies);
             Collection<Double> dataTraffic = DataTraffic.get(numCopies);
             Collection<Double> syncTraffic = SyncTraffic.get(numCopies);
+            Collection<Double> avgPathLength = AvgPathLength.get(numCopies);
             Collection<Double> copies = copiesUsed.get(numCopies);
 
             Pair<Double, Double> totalTrafficStats = StatAlgorithms.ConfIntervals(totalTraffic,95);
             Pair<Double, Double> dataTrafficStats = StatAlgorithms.ConfIntervals(dataTraffic,95);
             Pair<Double, Double> syncTrafficStats = StatAlgorithms.ConfIntervals(syncTraffic,95);
+            Pair<Double, Double> avgPathLengthStats = StatAlgorithms.ConfIntervals(avgPathLength,95);
             Pair<Double, Double> copyStats = StatAlgorithms.ConfIntervals(copies,95);
 
             System.out.println(
@@ -292,6 +273,9 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                             StatAlgorithms.round2(copyStats.getFirst()) //+ " " +
                     //round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
                     //round2(copyStats.getFirst()+copyStats.getSecond())
+                    + " " +
+                    avgPathLengthStats.getFirst()
+
             );
 
 
@@ -307,6 +291,7 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                     TotalTraffic.get(numCopies).remove(i);
                     DataTraffic.get(numCopies).remove(i);
                     SyncTraffic.get(numCopies).remove(i);
+                    AvgPathLength.get(numCopies).remove(i);
                 }
 
 
@@ -316,11 +301,13 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
             Collection<Double> dataTraffic = DataTraffic.get(numCopies);
             Collection<Double> syncTraffic = SyncTraffic.get(numCopies);
             Collection<Double> copies = copiesUsed.get(numCopies);
+            Collection<Double> avgPathLength = AvgPathLength.get(numCopies);
 
             Pair<Double, Double> totalTrafficStats = StatAlgorithms.ConfIntervals(totalTraffic,95);
             Pair<Double, Double> dataTrafficStats = StatAlgorithms.ConfIntervals(dataTraffic,95);
             Pair<Double, Double> syncTrafficStats = StatAlgorithms.ConfIntervals(syncTraffic,95);
             Pair<Double, Double> copyStats = StatAlgorithms.ConfIntervals(copies,95);
+            Pair<Double, Double> avgPathLengthStats = StatAlgorithms.ConfIntervals(avgPathLength,95);
 
             System.out.println(
                     numCopies + " " +
@@ -337,6 +324,8 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
             (copyStats.getFirst()) //+ " " +
                             //round2(copyStats.getFirst()-copyStats.getSecond()) + " " +
                             //round2(copyStats.getFirst()+copyStats.getSecond())
+                            + " " +
+                            avgPathLengthStats.getFirst()
             );
         }
     }

@@ -9,6 +9,7 @@ public class TrafficDemand {
 
     private Vertex source;
     private Vertex destination;
+    private Vertex copy;
     private double demand;
 
     public TrafficDemand(Vertex source, Vertex destination, double demand){
@@ -27,6 +28,14 @@ public class TrafficDemand {
 
     public Vertex getDestination(){
         return destination;
+    }
+
+    public void setCopy(Vertex copy){
+        this.copy = copy;
+    }
+
+    public Vertex getCopy(){
+        return copy;
     }
 
 }

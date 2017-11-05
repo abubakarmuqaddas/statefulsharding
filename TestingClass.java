@@ -28,7 +28,7 @@ public class TestingClass {
 
     public static void main(String[] args) {
 
-
+        /*
         ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(13,Double.MAX_VALUE,
                 ManhattanGraphGen.mType.UNWRAPPED,false, false);
 
@@ -51,7 +51,13 @@ public class TestingClass {
 
 
         System.out.println(totalDistance/occurences);
+        */
 
+        Random rand = new Random(2500);
+
+        for(int i=1 ; i<=100 ; i++){
+            System.out.print(rand.nextInt(2) + " ");
+        }
 
     }
 
