@@ -25,12 +25,12 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp {
 
         int size = 5;
         int startCopies = 1;
-        int endCopies = 10;
+        int endCopies = 5;
         //int numCopies = 15;
         double alphaStart = 1.0;
         double alphaEnd = 1.0;
         double alphaInterval = 0.1;
-        double alpha = 0.50;
+        double alpha = 0.8;
         int startPartitionRuns = 1;
         int endPartitionRuns = 10;
         int lsOuterStart = 1;

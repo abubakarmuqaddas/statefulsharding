@@ -17,7 +17,7 @@ import java.util.*;
 
 public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
 
-    private static double syncAlpha = 0.25;
+    private static double syncAlpha = 0.05;
 
     public static void main(String[] args){
 
@@ -26,8 +26,8 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
         //Random rand = new Random();
 
         int size = 5;
-        int startCopies = 1;
-        int endCopies = 15;
+        int startCopies = 2;
+        int endCopies = 2;
         //int numCopies = 15;
 
         int lsOuterStart = 1;
@@ -40,6 +40,7 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
         HashMap<Integer, ArrayList<Double>> TotalTraffic = new HashMap<>();
         HashMap<Integer, ArrayList<Double>> DataTraffic = new HashMap<>();
         HashMap<Integer, ArrayList<Double>> SyncTraffic = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> AvgPathLength = new HashMap<>();
         HashMap<Integer, ArrayList<Double>> copiesUsed = new HashMap<>();
         //HashMap<Integer, HashMap<Integer, Double>> TrafficShortestPath = new HashMap<>();
 
@@ -86,12 +87,13 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
 
                 for (int partitionNum = startPartitionRuns; partitionNum <= endPartitionRuns; partitionNum++) {
 
-                    long seed = 20000*traffic + 1000*partitionNum + (long)(1200*syncAlpha);
+                    long seed = 20000*traffic + 1000*partitionNum + (long)(1200*syncAlpha) + 500*numCopies
+                            + 4*size;
                     Random rand = new Random(seed);
 
                     System.out.println("Partition num: " + partitionNum);
 
-                    /*
+
                     HashMap<Vertex, ListGraph> partitions =
                             Partitioning.EvolutionaryPartition(
                                     graph,
@@ -104,7 +106,7 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                                     false,
                                     null
                             );
-                            */
+
 
 
                     String PartitionFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
@@ -113,11 +115,22 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
                             "_NumCopies_" + numCopies + "_PartitionRun_" + partitionNum;
 
 
+
+
+
                     for(int lsOuter = lsOuterStart ; lsOuter<=lsOuterFinish ; lsOuter++) {
 
-                        //ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
+                        ArrayList<Vertex> sortedVertices = new ArrayList<>(partitions.keySet());
 
-                        ArrayList<Vertex> sortedVertices = Partitioning.getCopies(graph,PartitionFile,false);
+                        //ArrayList<Vertex> sortedVertices = Partitioning.getCopies(graph,PartitionFile,false);
+
+                        if(lsOuter == lsOuterStart){
+                            System.out.println("Start of LS: Path length is: " + ShortestPath
+                                    .dijsktra(graph,sortedVertices.get(0),sortedVertices.get(1))
+                                    .getSize());
+                            System.out.println("Vertices are: " + sortedVertices.get(0).getLabel() + " , " +
+                                    sortedVertices.get(1).getLabel());
+                        }
 
                         LinkedList<ArrayList<Vertex>> checkedVertices = new LinkedList<>();
 
@@ -226,6 +239,11 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
 
                         TotalTraffic.get(numCopies).add(bestTraffic);
                         DataTraffic.get(numCopies).add(bestDataTraffic);
+
+                        System.out.println("Path length is: " + ShortestPath
+                                .dijsktra(graph,sortedVertices.get(0),sortedVertices.get(1))
+                                .getSize());
+
                         SyncTraffic.get(numCopies).add(bestSyncTraffic);
                         copiesUsed.get(numCopies).add((double) afterDataRouted.getSecond().size());
 
@@ -483,10 +501,10 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
 
         }
 
+
         ArrayList<Vertex> usedVertices = new ArrayList<>();
-        for (Vertex copy : copies) {
-            usedVertices.add(copy);
-        }
+
+        copies.forEach(vertex -> Collections.addAll(usedVertices,vertex));
 
         for(Vertex vertex : usage.keySet()){
             if (usage.get(vertex)==0){
@@ -521,6 +539,23 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
         }
 
         return currentIter;
+    }
+
+    private static double getAveragePathLength(ArrayList<Vertex> vertices, ListGraph graph){
+
+        double totalPathLength = 0;
+
+        for(Vertex vertex1 : vertices){
+            for(Vertex vertex2 : vertices){
+                if(!vertex1.equals(vertex2)){
+                    totalPathLength += ShortestPath.dijsktra(graph,vertex1,vertex2).getSize();
+                }
+            }
+        }
+
+        double numConns = vertices.size()*(vertices.size()-1);
+
+        return totalPathLength/numConns;
     }
 
 

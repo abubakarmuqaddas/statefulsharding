@@ -28,22 +28,32 @@ public class TestingClass {
 
     public static void main(String[] args) {
 
-        long seed = 17092011;
 
-        Random rand = new Random(seed);
+        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(13,Double.MAX_VALUE,
+                ManhattanGraphGen.mType.UNWRAPPED,false, false);
 
-        for(int i=1 ; i<=10 ; i++) {
-            System.out.println(rand.nextInt(6));
+        ListGraph graph = manhattanGraphGen.getManhattanGraph();
+
+        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                ShortestPath.FloydWarshall(graph, false, null);
+
+        double totalDistance = 0;
+        double occurences = 0;
+
+        for (Vertex src : graph.getVertices()) {
+            for (Vertex dst : graph.getVertices()) {
+                if(!src.equals(dst)){
+                    totalDistance += dist.get(src).get(dst);
+                    occurences++;
+                }
+            }
         }
 
 
-
-
-
+        System.out.println(totalDistance/occurences);
 
 
     }
-
 
 
 
