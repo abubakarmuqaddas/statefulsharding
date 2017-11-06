@@ -312,6 +312,14 @@ public class ListGraph {
         return successors;
     }
 
+    public int getNumSuccessors(Vertex vertex){
+
+        if (adjList.get(vertex)!=null){
+            return this.getSuccessors(vertex).size();
+        }
+        return 0;
+    }
+
     /**
      * Get the predecessors of a vertex (i.e. predecessor -> vertex)
      * @param vertex: Target vertex

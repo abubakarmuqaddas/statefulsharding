@@ -1,6 +1,7 @@
 package statefulsharding.heuristic;
 
 import statefulsharding.MapUtils;
+import statefulsharding.Pair;
 import statefulsharding.Traffic.TrafficDemand;
 import statefulsharding.Traffic.TrafficGenerator;
 import statefulsharding.Traffic.TrafficStore;
@@ -8,6 +9,7 @@ import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.Partitioning;
 import statefulsharding.graph.algorithms.ShortestPath;
+import statefulsharding.graph.algorithms.StatAlgorithms;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
 import java.util.*;
@@ -23,12 +25,22 @@ public class NewTfcHeur {
 
     public static void main(String[] args){
 
-        Random rand = new Random(2500);
+        int size = 10;
+        int startCopies = 2;
+        int endCopies = 8;
+        int startTraffic = 1;
+        int endTraffic = 10;
+        int startPartitionRuns = 1;
+        int endPartitionRuns = 10;
+        int numLSIterOuter = 10;
+        int numLSIterInner = 100;
 
-        int size = 5;
-        int numCopies = 2;
-        int numLocalSearchIterOuter = 10;
-        int numLocalSearchIterInner = 100;
+        /* Size, CopyNum*/
+        HashMap<Integer, ArrayList<Double>> TotalTfcColl = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> DataTfcColl = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> SyncTfcCol = new HashMap<>();
+        HashMap<Integer, HashMap<Integer, ArrayList<Double>>> AvgPathLengthCol = new HashMap<>();
+        HashMap<Integer, ArrayList<Double>> copiesUsedCol = new HashMap<>();
 
         ListGraph graph = ManhattanGraphGen.generateManhattanUnwrapped(size, Integer.MAX_VALUE, true);
 
@@ -40,98 +52,184 @@ public class NewTfcHeur {
                         "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" +
                         size +  ".csv";
 
-        int traffic = 1;
-
-        TrafficStore trafficStore = new TrafficStore();
-        TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic,1,false, trafficFile);
-
-        int partitionNum = 1;
-        String PartitionFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
-                "MANHATTAN-UNWRAPPED-Partitions/" +
-                "MANHATTAN-UNWRAPPED-Partitions_Size_" + size +
-                "_NumCopies_" + numCopies + "_PartitionRun_" + partitionNum;
-
-        for(int outerLocalSearchIter = 1 ; outerLocalSearchIter<=numLocalSearchIterOuter ; outerLocalSearchIter++) {
-
-            /*
-                Initial computation of localSearch
-             */
-
-            ArrayList<Vertex> currentCopies = Partitioning.getCopies(graph, PartitionFile,false);
-            ArrayList<Vertex> bestCopies = new ArrayList<>(currentCopies);
-            double bestDataTraffic = routeTraffic(currentCopies, dist, trafficStore);
-            ArrayList<Vertex> bestUsedCopies = getUsage(trafficStore);
-            double bestSyncTraffic = getSyncTraffic(bestUsedCopies, graph, trafficStore);
-            double bestTotalTraffic = bestDataTraffic + bestSyncTraffic;
 
 
-            /*
-                Now disturb the existing copies (i.e. the current copies)
-             */
+        for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
 
-            ArrayList<ArrayList<Vertex>> checkedCopies = new ArrayList<>();
-            checkedCopies.add(new ArrayList<>(currentCopies));
+            TotalTfcColl.put(numCopies, new ArrayList<>());
+            DataTfcColl.put(numCopies, new ArrayList<>());
+            SyncTfcCol.put(numCopies, new ArrayList<>());
+            copiesUsedCol.put(numCopies, new ArrayList<>());
+            AvgPathLengthCol.put(numCopies, new HashMap<>());
 
-            for (int innerLocalSearchIter = 1; innerLocalSearchIter<=numLocalSearchIterInner; innerLocalSearchIter++){
 
-                /*
-                    Pick the random vertex to move out of currentCopies
-                 */
+            for (int traffic = startTraffic; traffic <= endTraffic; traffic++) {
 
-                int targetVertexNo = rand.nextInt(numCopies);
-                Vertex targetVertex = currentCopies.get(targetVertexNo);
+                TrafficStore trafficStore = new TrafficStore();
+                TrafficGenerator.fromFileLinebyLine(graph, trafficStore, traffic, 1, false,
+                        trafficFile);
 
-                /*
-                    Get all successors and remove targetVertex from it
-                 */
+                for (int partitionNum = startPartitionRuns; partitionNum <= endPartitionRuns; partitionNum++){
 
-                LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
-                if (successors.contains(targetVertex))
-                    successors.remove(targetVertex);
+                    System.out.println("Numcopies: " + numCopies + ", Traffic: " + traffic + ", Partition: " +
+                            partitionNum);
 
-                /*
-                    Pick one successor randomly
-                 */
 
-                int newTargetVertexNo = rand.nextInt(successors.size());
-                Vertex newTargetVertex = successors.get(newTargetVertexNo);
+                    String PartitionFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
+                            "MANHATTAN-UNWRAPPED-Partitions/" +
+                            "MANHATTAN-UNWRAPPED-Partitions_Size_" + size +
+                            "_NumCopies_" + numCopies + "_PartitionRun_" + partitionNum;
 
-                /*
-                    Move the picked vertex
-                 */
+                    long seed = 20000*traffic + 1000*partitionNum + (long)(1200*syncAlpha) + 500*numCopies
+                            + 4*size;
+                    Random rand = new Random(seed);
 
-                currentCopies.set(targetVertexNo, newTargetVertex);
 
-                if(!nestedListContainsList(checkedCopies, currentCopies)){
 
-                    ArrayList<Vertex> temp = new ArrayList<>(currentCopies);
-                    checkedCopies.add(temp);
+                    for (int outerLSIter = 1; outerLSIter <= numLSIterOuter; outerLSIter++) {
 
-                    double dataTraffic = routeTraffic(currentCopies, dist, trafficStore);
-                    ArrayList<Vertex> usedCopies = getUsage(trafficStore);
-                    double syncTraffic = getSyncTraffic(usedCopies, graph, trafficStore);
-                    double totalTraffic = dataTraffic + syncTraffic;
+                        /*
+                            Initial computation of LS
+                         */
 
-                    if(totalTraffic<bestTotalTraffic){
+                        ArrayList<Vertex> currentCopies = Partitioning.getCopies(graph, PartitionFile,
+                                false);
+                        ArrayList<Vertex> bestCopies = new ArrayList<>(currentCopies);
+                        double bestDataTraffic = routeTraffic(currentCopies, dist, trafficStore);
+                        ArrayList<Vertex> bestUsedCopies = getUsage(trafficStore);
+                        double bestSyncTraffic = getSyncTraffic(bestUsedCopies, graph, trafficStore);
+                        double bestTotalTraffic = bestDataTraffic + bestSyncTraffic;
 
-                        bestCopies.clear();
-                        bestCopies.addAll(currentCopies);
-                        bestUsedCopies.clear();
-                        bestUsedCopies.addAll(usedCopies);
 
-                        bestDataTraffic = dataTraffic;
-                        bestSyncTraffic = syncTraffic;
-                        bestTotalTraffic = totalTraffic;
-                    }
-                    else{
-                        currentCopies.set(targetVertexNo, targetVertex);
+                        /*
+                            Now disturb the existing copies (i.e. the current copies)
+                         */
+
+                        ArrayList<ArrayList<Vertex>> checkedCopies = new ArrayList<>();
+                        checkedCopies.add(new ArrayList<>(currentCopies));
+
+                        for (int innerLSIter = 1; innerLSIter <= numLSIterInner; innerLSIter++) {
+
+                            /*
+                                Pick the random vertex to move out of currentCopies
+                             */
+
+                            int targetVertexNo = rand.nextInt(numCopies);
+                            Vertex targetVertex = currentCopies.get(targetVertexNo);
+
+                            /*
+                                Get all successors and remove targetVertex from it
+                             */
+
+                            LinkedList<Vertex> successors = graph.getSuccessorsList(targetVertex);
+                            if (successors.contains(targetVertex))
+                                successors.remove(targetVertex);
+
+                            /*
+                                Pick one successor randomly
+                             */
+
+                            int newTargetVertexNo = rand.nextInt(successors.size());
+                            Vertex newTargetVertex = successors.get(newTargetVertexNo);
+
+                            /*
+                                Move the picked vertex
+                             */
+
+                            currentCopies.set(targetVertexNo, newTargetVertex);
+
+                            if (!nestedListContainsList(checkedCopies, currentCopies)){
+
+                                ArrayList<Vertex> temp = new ArrayList<>(currentCopies);
+                                checkedCopies.add(temp);
+
+                                double dataTraffic = routeTraffic(currentCopies, dist, trafficStore);
+                                ArrayList<Vertex> usedCopies = getUsage(trafficStore);
+                                double syncTraffic = getSyncTraffic(usedCopies, graph, trafficStore);
+                                double totalTraffic = dataTraffic + syncTraffic;
+
+                                if (totalTraffic < bestTotalTraffic) {
+
+                                    bestCopies.clear();
+                                    bestCopies.addAll(currentCopies);
+                                    bestUsedCopies.clear();
+                                    bestUsedCopies.addAll(usedCopies);
+
+                                    bestDataTraffic = dataTraffic;
+                                    bestSyncTraffic = syncTraffic;
+                                    bestTotalTraffic = totalTraffic;
+
+                                }
+                                else {
+                                    currentCopies.set(targetVertexNo, targetVertex);
+                                }
+                            }
+                            else {
+                                currentCopies.set(targetVertexNo, targetVertex);
+                            }
+                        }
+                        /*
+                        System.out.println("LSIter: " + outerLSIter + ", TotalTraffic: " + bestTotalTraffic
+                                + ", DataTraffic: " + bestDataTraffic + ", SyncTraffic: " + bestSyncTraffic
+                                + ", Copies: " + bestCopies.size() + ", CopiesUsed: " + bestUsedCopies.size());
+                                */
+
+                        TotalTfcColl.get(numCopies).add(bestTotalTraffic);
+                        DataTfcColl.get(numCopies).add(bestDataTraffic);
+                        SyncTfcCol.get(numCopies).add(bestSyncTraffic);
+                        copiesUsedCol.get(numCopies).add((double)bestUsedCopies.size());
+
+                        if(bestUsedCopies.size()==3) {
+                            int d = 1;
+                        }
+
+                        AvgPathLengthCol.get(numCopies).putIfAbsent(bestUsedCopies.size(), new ArrayList<>());
+                        AvgPathLengthCol
+                                .get(numCopies)
+                                .get(bestUsedCopies.size())
+                                .add(getAveragePathLength(bestUsedCopies, graph));
+                        /*
+                        System.out.println("NumCopiesUsed: " + bestUsedCopies.size() +
+
+                        ", AvgPathLength: " + StatAlgorithms.round2(getAveragePathLength(bestUsedCopies, graph)));
+                        */
                     }
                 }
-                else{
-                    currentCopies.set(targetVertexNo, targetVertex);
-                }
+
+                trafficStore.clear();
             }
         }
+
+        System.out.println("NumCopies TotalTfcMean DataTfcMean SyncTfcMean copiesUsedMean");
+
+        for (int numCopies = startCopies; numCopies <= endCopies; numCopies++){
+
+            Pair<Double, Double> totalTraffic = StatAlgorithms.ConfIntervals(TotalTfcColl.get(numCopies),95);
+            Pair<Double, Double> dataTraffic = StatAlgorithms.ConfIntervals(DataTfcColl.get(numCopies),95);
+            Pair<Double, Double> syncTraffic= StatAlgorithms.ConfIntervals(SyncTfcCol.get(numCopies),95);
+            Pair<Double, Double> copiesUsed = StatAlgorithms.ConfIntervals(copiesUsedCol.get(numCopies),95);
+
+            System.out.println(
+                    numCopies + " " +
+                            StatAlgorithms.round2(totalTraffic.getFirst()) + " " +
+                            StatAlgorithms.round2(dataTraffic.getFirst()) + " " +
+                            StatAlgorithms.round2(syncTraffic.getFirst()) + " " +
+                            StatAlgorithms.round2(copiesUsed.getFirst())
+            );
+        }
+
+        System.out.println("NumCopies UsedCopies AvgPathLength");
+        for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
+            System.out.println("----------");
+            for (Integer usedCopies : AvgPathLengthCol.get(numCopies).keySet()) {
+                Pair<Double, Double> AvgPathLength =
+                        StatAlgorithms.ConfIntervals(AvgPathLengthCol.get(numCopies).get(usedCopies), 95);
+                System.out.println(numCopies + " " + usedCopies + " " +
+                        StatAlgorithms.round2(AvgPathLength.getFirst()));
+            }
+        }
+
+
 
     }
 
@@ -276,6 +374,20 @@ public class NewTfcHeur {
         }
 
         return contains;
+    }
+
+    private static double getAveragePathLength(ArrayList<Vertex> vertices, ListGraph graph){
+
+        double totalPathLength = 0;
+
+        for(Vertex vertex1 : vertices){
+            for(Vertex vertex2 : vertices){
+                if(!vertex1.equals(vertex2)){
+                    totalPathLength += ShortestPath.dijsktra(graph,vertex1,vertex2).getSize();
+                }
+            }
+        }
+        return totalPathLength/(vertices.size()*(vertices.size()-1));
     }
 
 
