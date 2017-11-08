@@ -19,15 +19,15 @@ import java.util.*;
  */
 
 
-public class NewTfcHeur {
+public class NewTfcHeurTempGraphWrite{
 
     private static double syncAlpha = 0.05;
 
     public static void main(String[] args){
 
         int size = 10;
-        int startCopies = 6;
-        int endCopies = 6;
+        int startCopies = 4;
+        int endCopies = 4;
         int startTraffic = 1;
         int endTraffic = 10;
         int startPartitionRuns = 1;
@@ -83,6 +83,14 @@ public class NewTfcHeur {
                     long seed = 20000*traffic + 1000*partitionNum + (long)(1200*syncAlpha) + 500*numCopies
                             + 4*size;
                     Random rand = new Random(seed);
+
+                    String writeFileInitial = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
+                            "partitioning/CheckPartitions/" +
+                            "MANHATTAN-UNWRAPPED-Partitions_Size_" + size +
+                            "_NumCopies_" + numCopies + "_PartitionRun_" + partitionNum + "_Traffic_"
+                            + traffic + ".dot";
+                    Partitioning.writePartitionGraphLeaders(graph, Partitioning.getCopies(graph, PartitionFile,
+                            false), writeFileInitial);
 
 
 
@@ -173,6 +181,14 @@ public class NewTfcHeur {
                                 + ", DataTraffic: " + bestDataTraffic + ", SyncTraffic: " + bestSyncTraffic
                                 + ", Copies: " + bestCopies.size() + ", CopiesUsed: " + bestUsedCopies.size());
                                 */
+                        /*
+                        String writeFile = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/analysis/" +
+                                "partitioning/CheckPartitions/" +
+                                "MANHATTAN-UNWRAPPED-Partitions_Size_" + size +
+                                "_NumCopies_" + numCopies + "_PartitionRun_" + partitionNum + "_Traffic_"
+                                + traffic + "_LocalSearchIter_" + outerLSIter + ".dot";
+                        Partitioning.writePartitionGraphLeaders(graph, bestCopies, writeFile);
+                        */
 
                         TotalTfcColl.get(numCopies).add(bestTotalTraffic);
                         DataTfcColl.get(numCopies).add(bestDataTraffic);

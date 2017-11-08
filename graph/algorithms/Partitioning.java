@@ -281,9 +281,7 @@ public class Partitioning {
             BufferedWriter partbw = new BufferedWriter(partfw);
             PrintWriter partout = new PrintWriter(partbw);
 
-            leaders.forEach(vertex -> {
-                partout.println(vertex.getLabel());
-            });
+            leaders.forEach(vertex -> partout.println(vertex.getLabel()));
 
             partout.flush();
         }
@@ -372,6 +370,54 @@ public class Partitioning {
         }
 
         return subGraphs;
+    }
+
+    public static void writePartitionGraphLeaders(ListGraph graph,
+                                           ArrayList<Vertex> leaders, String filename){
+
+        ArrayList<String> colors1 = new ArrayList<>(Arrays.asList("peru", "blue", "darkgreen",
+                "red", "darkslategray","bisque4"));
+        ArrayList<String> colors2 = new ArrayList<>(Arrays.asList("wheat", "lightblue", "seagreen1",
+                "rosybrown1","darkseagreen","bisque"));
+
+        try {
+            FileWriter partfw = new FileWriter(filename, true);
+            BufferedWriter partbw = new BufferedWriter(partfw);
+            PrintWriter partout = new PrintWriter(partbw);
+            ArrayList<Integer> leadersInteger = new ArrayList<>();
+
+            partout.println("strict graph G {");
+            partout.println("\t" + "ratio=1;");
+
+            for (int i=0 ; i<leaders.size() ; i++){
+                partout.println("\t" + leaders.get(i).getLabel()
+                        + " [color=" + colors1.get(3) + ",style = filled];");
+                partout.flush();
+                leadersInteger.add(leaders.get(i).getLabel());
+            }
+
+            for (Vertex vertex : graph.getVertices()) {
+                if(leaders.contains(vertex))
+                    continue;
+                partout.println("\t" + vertex.getLabel()
+                        + " [color=" + colors2.get(3) + ",style = filled];");
+                partout.flush();
+            }
+
+            for (Edge edge : graph.getallEdges()){
+                if(!edge.getSource().equals(edge.getDestination())) {
+                    partout.println("\t" + edge.getSource().getLabel() + " -- "
+                            + edge.getDestination().getLabel() + ";");
+                    partout.flush();
+                }
+            }
+
+            partout.println("}");
+            partout.flush();
+        }
+        catch (IOException e){
+            System.out.println("Caught Exception " + e + " while writing graph partition");
+        }
     }
 
 

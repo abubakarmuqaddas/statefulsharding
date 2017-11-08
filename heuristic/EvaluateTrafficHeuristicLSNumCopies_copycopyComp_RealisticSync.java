@@ -25,9 +25,9 @@ public class EvaluateTrafficHeuristicLSNumCopies_copycopyComp_RealisticSync {
         //Random rand = new Random(seed);
         //Random rand = new Random();
 
-        int size = 5;
-        int startCopies = 4;
-        int endCopies = 4;
+        int size = 15;
+        int startCopies = 2;
+        int endCopies = 2;
         //int numCopies = 15;
 
         int lsOuterStart = 1;

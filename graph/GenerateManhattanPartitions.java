@@ -10,16 +10,19 @@ public class GenerateManhattanPartitions {
 
     public static void main(String[] args) {
 
-        for (int size = 3; size <= 10; size++) {
+        for (int size = 11; size <= 11; size++) {
 
             ManhattanGraphGen m = new ManhattanGraphGen(size, Integer.MAX_VALUE,
                     ManhattanGraphGen.mType.UNWRAPPED, false, true);
 
             ListGraph graph = m.getManhattanGraph();
 
-            for (int numCopies = 1; numCopies <= 1; numCopies++) {
+            for (int numCopies = 1; numCopies <= 16; numCopies++) {
 
-                for (int partitionRun = 1; partitionRun <= 100; partitionRun++) {
+                for (int partitionRun = 1; partitionRun <= 10; partitionRun++) {
+
+                    System.out.println("Size: " + size + ", Num Copies: " + numCopies + ", Partition Run: " +
+                            partitionRun);
 
                     HashMap<Vertex, ListGraph> partitions =
                             Partitioning.EvolutionaryPartition(
