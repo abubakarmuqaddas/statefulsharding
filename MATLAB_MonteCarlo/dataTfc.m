@@ -74,3 +74,8 @@ for iter=1:length(c)
 end
 
 plot(c,syncDist,'-*r')
+
+plot(c,0.05*syncDist.*c.*(c-1),'-ok')
+hold on
+plot(c,0.05*100*mean(dist),'-*r')
+plot(c,0.5*100*mean(dist)+0.01*syncDist.*c.*(c-1),'-xb')
