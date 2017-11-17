@@ -4,7 +4,7 @@ clc
 
 load distances
 
-sizeOfCopies=7;
+sizeOfCopies=6;
 lambdaD = 4;
 N = 100; %nodes
 lambdaS=0.05;
@@ -25,15 +25,18 @@ plot(c,totTfc,'-xb')
 xlabel('Number of copies')
 ylabel('Traffic')
 
-legend('Synchronization traffic','Data traffic','Total traffic')
+legend('Synchronization traffic','Data traffic','Total traffic', ... 
+'Location','best')
 
-% lambdaD2 = 4.5;
-% lambdaS2 = 0.001:0.005:0.05;
+% lambdaD2 = 4;
+% lambdaS2 = 0.000:0.025:0.1;
+% tfc=[];
 % 
 % figure
 % hold on
 % for i=1:length(lambdaS2)
-%     plot(c,lambdaS2(i)*syncDist.*c.*(c-1) + lambdaD2*N*mDist)
+%     tfc = [ tfc ; lambdaS2(i)*syncDist.*c.*(c-1) + lambdaD2*N*mDist];
+%     plot(c,lambdaS2(i)*syncDist.*c.*(c-1) + lambdaD2*N*mDist,'-o')
 %     hold on
 % end
 

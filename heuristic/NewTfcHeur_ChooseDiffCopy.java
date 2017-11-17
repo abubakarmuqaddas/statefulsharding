@@ -35,7 +35,7 @@ public class NewTfcHeur_ChooseDiffCopy{
         int numLSIterOuter = 10;
         int numLSIterInner = 100;
 
-        /* Size, CopyNum*/
+        /* CopyNum*/
         HashMap<Integer, ArrayList<Double>> TotalTfcColl = new HashMap<>();
         HashMap<Integer, ArrayList<Double>> DataTfcColl = new HashMap<>();
         HashMap<Integer, ArrayList<Double>> SyncTfcCol = new HashMap<>();
