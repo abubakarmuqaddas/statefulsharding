@@ -27,15 +27,15 @@ import static statefulsharding.heuristic.TrafficHeuristic.hType.fixedcopies;
 
 public class TestingClass {
 
-    private static double syncAlpha = 0.25;
+    private static double syncAlpha = 1;
 
     public static void main(String[] args) {
 
         int size = 9;
 
         int startTraffic = 1;
-        int endTraffic = 10;
-        int numCopies = 9;
+        int endTraffic = 1;
+
 
         HashMap<Integer, ArrayList<Double>> TotalTfcColl = new HashMap<>();
         HashMap<Integer, ArrayList<Double>> DataTfcColl = new HashMap<>();
@@ -46,6 +46,10 @@ public class TestingClass {
         ListGraph graph = ManhattanGraphGen.generateManhattanUnwrapped(size, Integer.MAX_VALUE, true);
 
         ArrayList<Vertex> copies = new ArrayList<>();
+
+        /*
+        9 x9 9 copies
+         */
 
 
         copies.add(graph.getVertex(10));
@@ -59,7 +63,51 @@ public class TestingClass {
         copies.add(graph.getVertex(70));
 
 
+
+
+        /*
+        9 x9 4 copies
+         */
+
+        /*
+        copies.add(graph.getVertex(20));
+        copies.add(graph.getVertex(24));
+        copies.add(graph.getVertex(56));
+        copies.add(graph.getVertex(60));
+        */
+
+        /*
+        9 x9 1 copies
+         */
+
         //copies.add(graph.getVertex(40));
+
+        /*
+        15 * 15 4 copies
+         */
+        /*
+        copies.add(graph.getVertex(48));
+        copies.add(graph.getVertex(56));
+        copies.add(graph.getVertex(168));
+        copies.add(graph.getVertex(176));
+        */
+
+        /*
+        15 * 15 9 copies
+         */
+        /*
+        copies.add(graph.getVertex(32));
+        copies.add(graph.getVertex(37));
+        copies.add(graph.getVertex(42));
+        copies.add(graph.getVertex(107));
+        copies.add(graph.getVertex(112));
+        copies.add(graph.getVertex(117));
+        copies.add(graph.getVertex(182));
+        copies.add(graph.getVertex(187));
+        copies.add(graph.getVertex(192));
+        */
+
+        int numCopies = copies.size();
 
         HashMap<Vertex, HashMap<Vertex, Integer>> dist =
                 ShortestPath.FloydWarshall(graph, false, null);
@@ -225,24 +273,26 @@ public class TestingClass {
         double syncTraffic = 0.0;
 
         for (int i = 0; i < copies.size(); i++) {
+
+            //int multiplier = occurrence.get(copies.get(i));
+            int multiplier = 1;
+            int distance = 0;
+
             for (int j = 0; j < copies.size(); j++) {
 
                 if (i == j)
                     continue;
 
-                int multiplier = occurrence.get(copies.get(i));
-
                 try {
-                    syncTraffic += syncAlpha *
-                            multiplier *
-                            ShortestPath.dijsktra(graph, copies.get(i), copies.get(j))
-                                    .getSize();
+                    distance += ShortestPath.dijsktra(graph, copies.get(i), copies.get(j)).getSize();
                 }
                 catch (NullPointerException e) {
                     //
                 }
-
             }
+
+            double currentSyncTraffic = StatAlgorithms.round2(syncAlpha*multiplier*distance);
+            syncTraffic += currentSyncTraffic;
         }
 
         return syncTraffic;

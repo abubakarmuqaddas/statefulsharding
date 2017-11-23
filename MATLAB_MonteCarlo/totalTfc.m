@@ -4,10 +4,10 @@ clc
 
 load distances
 
-sizeOfCopies=6;
-lambdaD = 4;
-N = 100; %nodes
-lambdaS=0.05;
+sizeOfCopies=27;
+lambdaD = 1;
+N = 1000000; %nodes
+lambdaS=0.2;
 
 c=c(1:sizeOfCopies);
 mDist=mDist(1:sizeOfCopies);

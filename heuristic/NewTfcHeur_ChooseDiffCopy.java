@@ -21,13 +21,13 @@ import java.util.*;
 
 public class NewTfcHeur_ChooseDiffCopy{
 
-    private static double syncAlpha = 0.25;
+    private static double syncAlpha = 0.05;
 
     public static void main(String[] args){
 
-        int size = 5;
-        int startCopies = 1;
-        int endCopies = 15;
+        int size = 9;
+        int startCopies = 16;
+        int endCopies = 16;
         int startTraffic = 1;
         int endTraffic = 10;
         int startPartitionRuns = 1;
