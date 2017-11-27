@@ -4,10 +4,10 @@ clc
 
 
 % Number of copies
-c=(2:40).^2;
+c=(2:20).^2;
 
 % Number of inner iterations
-numIters = 1000000;
+numIters = 10000000;
 
 % Initialize dist matrix
 dist = zeros(numIters, length(c));
