@@ -4,19 +4,20 @@ clc
 
 load distances
 
-Copies=100;
+Copies=119;
 
+copies=c;
 c=c(1:Copies);
 syncDist=syncDist(1:Copies);
 mDist=mDist(1:Copies);
 
-%powersReq=10:13;
-%N=(10*ones(1,length(powersReq))).^powersReq;
-N=10^10;
+powersReq=5:13;
+N=(10*ones(1,length(powersReq))).^powersReq;
+%N=10^10;
 
 lambdaD = 1;
 
-lambdaSLambdaD=0.5:0.01:1;
+lambdaSLambdaD=0.01:0.05:2;
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -34,11 +35,11 @@ for j=1:length(N)
     end
 end
 
-colorspec = {[0.9 0.9 0.9]; [0.8 0.8 0.8]; [0.6 0.6 0.6]; ...
-  [0.4 0.4 0.4]; [0.2 0.2 0.2] ; [0.3 0.3 0.3] ; [0.5 0.5 0.5];...
-  [0.7 0.7 0.7];[1 0 0];[0 1 0];[0 1 0];[1 1 0]};
+colorspec = {[0.1 0.1 0.1];[0.9 0.9 0.9]; [0.8 0.8 0.8]; [0.6 0.6 0.6]; ...
+  [0.4 0.4 0.4]; [0.2 0.2 0.2] ; [0.3 0.3 0.3] ; [0.9 0.5 0.5];...
+  [0.7 0.7 0.7];[0 1.0 0];[0 1.0 0];[1.0 0.5 0]};
 
-pointTypes = ['+','o','*','s','d','x','>','<','p','h'];
+pointTypes = ['+','o','*','s','d','x','>','h','<','p'];
 colorTypes = ['r','b','k','m','c'];
 
 figure
@@ -60,15 +61,16 @@ end
 legend(Legend)
 
 %%
+currentN = 9;
 figure
 hold on
 for i=1:length(lambdaSLambdaD)
-   temp1=totTfc(1,i,:);
-   temp2=syncTfc(1,i,:);
-   temp3=dataTfc(1,i,:);
-   %plot(c,temp1(:)')
+   temp1=totTfc(currentN,i,:);
+   temp2=syncTfc(currentN,i,:);
+   temp3=dataTfc(currentN,i,:);
+   plot(c,temp1(:)'); xlabel('Copies'); ylabel('Traffic');
    %plot(c,temp2(:)')
-   plot(c,temp3(:)')
+   %plot(c,temp3(:)')
    %
 end
  
