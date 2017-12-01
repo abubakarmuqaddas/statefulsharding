@@ -2,6 +2,7 @@ clearvars
 close all
 clc
 
+set(0,'DefaultAxesFontName', 'Times New Roman')
 load distances
 
 Copies=119;
@@ -46,8 +47,8 @@ figure
 hold on
 xlabel('$\lambda_s / \lambda_d$','Interpreter','latex')
 ylabel('Number of copies')
-h=get(gca,'xlabel');
-set(h, 'FontSize', 15) 
+set(gca, 'FontSize', 15) 
+%set(h, 'FontSize', 15) 
 
 for i=1:length(N)
     plot(lambdaSLambdaD,...
@@ -61,16 +62,18 @@ end
 legend(Legend)
 
 %%
-currentN = 9;
+currentN = 6;
 figure
 hold on
+xlabel('Copies'); ylabel('Traffic');
 for i=1:length(lambdaSLambdaD)
    temp1=totTfc(currentN,i,:);
    temp2=syncTfc(currentN,i,:);
    temp3=dataTfc(currentN,i,:);
-   plot(c,temp1(:)'); xlabel('Copies'); ylabel('Traffic');
-   %plot(c,temp2(:)')
-   %plot(c,temp3(:)')
+   plot(c,temp1(:)')%, ylim([0 max(temp1(:))])
+   plot(c,temp2(:)')%, ylim([0 max(temp2(:))])
+   %plot(c,temp3(:)')%, ylim([0 max(temp3(:))])
+   set(gca, 'FontSize', 15) 
    %
 end
  
