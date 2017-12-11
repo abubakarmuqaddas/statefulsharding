@@ -12,13 +12,15 @@ c=c(1:Copies);
 syncDist=syncDist(1:Copies);
 mDist=mDist(1:Copies);
 
-powersReq=5:13;
+powersReq=5:6;
 N=(10*ones(1,length(powersReq))).^powersReq;
 %N=10^10;
 
 lambdaD = 1;
 
-lambdaSLambdaD=0.01:0.05:2;
+lambdaSLambdaD=0:0.05:1;
+
+%lambdaSLambdaD=10.^(-6:0)
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -51,9 +53,12 @@ set(gca, 'FontSize', 15)
 %set(h, 'FontSize', 15) 
 
 for i=1:length(N)
-    plot(lambdaSLambdaD,...
+    semilogy(lambdaSLambdaD,...
         copySelected(i,:),strcat('-',pointTypes(rem(i,length(pointTypes))),colorspec{i}));
 end
+
+%ylim([0 2000])
+
 
 Legend=cell(length(N),1);
 for iter=1:length(N)
@@ -76,7 +81,9 @@ for i=1:length(lambdaSLambdaD)
    set(gca, 'FontSize', 15) 
    %
 end
- 
+title('N=10e10')
+text(5000,5e9,'Total Traffic','FontSize', 15)
+text(5000,0.30e9,'Sync Traffic','FontSize', 15) 
  
  
  
