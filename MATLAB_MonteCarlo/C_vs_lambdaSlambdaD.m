@@ -134,6 +134,9 @@ legend(Legend)
 %title('N=10e10')
 %text(5000,5e9,'Total Traffic','FontSize', 15)
 %text(5000,0.30e9,'Sync Traffic','FontSize', 15) 
+
+figure
+plot(c,mDist,'LineWidth',1.5); xlabel('Number of Copies'); ylabel('$\hat{d}_{data}$','Interpreter','latex'); set(gca, 'FontSize', 15)
  
  
  

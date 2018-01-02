@@ -46,7 +46,7 @@ end
 
 for i=1:length(N)
     p = round(polyfit(log10(xAxis{i}),log10(yAxis{i}),1),2);
-    display(strcat('C=',num2str(p(2)),'\frac{\lambda_s}{\lambda_d} ^{',num2str(p(1)),'} for N=10^{',num2str(log10(N(i))),'}'))
+    display(strcat('C=',num2str(round(10^p(2),2)),' \left( \lambda_s/\lambda_d \right)  ^{',num2str(p(1)),'} for N=10^{',num2str(log10(N(i))),'}'))
 end
 
 

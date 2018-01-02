@@ -25,7 +25,7 @@ N=(10*ones(1,length(powersReq))).^powersReq;
 
 lambdaD = 1;
 
-lambdaSLambdaD=0.01:0.01:1;
+lambdaSLambdaD=0.01:0.05:1;
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -46,7 +46,7 @@ end
 figure(10)
 hold on
 k=1;
-numLambdaSLambdaD_jumps=10;
+numLambdaSLambdaD_jumps=4;
 
 dataToWrite = N';
 
@@ -66,8 +66,7 @@ for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
     end
     k=k+1;
     p = round(polyfit(log10(N),log10(NversusCopy),1),2);
-    display(strcat('C=',num2str(p(2)),'N^{',num2str(p(1))...
-         ,'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
+    display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
 end
 
 numLegendEntry=length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD));
