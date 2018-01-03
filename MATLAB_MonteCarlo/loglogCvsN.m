@@ -30,9 +30,9 @@ N=(10*ones(1,length(powersReq))).^powersReq;
 
 lambdaD = 1;
 
-%lambdaSLambdaD=[0.01:0.01:0.1 0.15:0.05:1];
 %lambdaSLambdaD=0.1:0.05:1;
-lambdaSLambdaD=[0.01:0.001:0.1 0.15:0.05:1];
+%lambdaSLambdaD=[0.01:0.001:0.1 0.15:0.05:1];
+lambdaSLambdaD=[0.032:0.001:0.037];
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -76,9 +76,9 @@ for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
         set(gca, 'FontSize', 15) 
     end
     k=k+1;
-    p = round(polyfit(log10(N),log10(NversusCopy),1),2);
-    display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
-    coEfficient(j)=10^p(2);
+    p = polyfit(log10(N),log10(NversusCopy),1);
+    %display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
+    coEfficient(j)=round(10^p(2),2);
 end
 
 numLegendEntry=length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD));
