@@ -12,13 +12,13 @@ c=c(1:Copies);
 syncDist=syncDist(1:Copies);
 mDist=mDist(1:Copies);
 
-powersReq=2:1:10;
+powersReq=2:1:14;
 N=(10*ones(1,length(powersReq))).^powersReq;
 
 lambdaD = 1;
 
-lambdaSLambdaD=0.01:0.01:1;
-%lambdaSLambdaD=10.^(-6:1);
+%lambdaSLambdaD=0.01:0.01:1;
+lambdaSLambdaD=10.^(-6:1);
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -30,7 +30,7 @@ for j=1:length(N)
     for i=1:length(lambdaSLambdaD)
         syncTfc(j,i,:)=lambdaS(i)*syncDist.*c.*(c-1);
         dataTfc(j,i,:)=lambdaD*N(j)*mDist;
-        totTfc(j,i,:)=syncTfc(j,i,:) + dataTfc(j,i,:);
+        totTfc(j,i,:)=sqrt(N(j)).*(syncTfc(j,i,:) + dataTfc(j,i,:));
         [minTotTfc,minCopy]=min(totTfc(j,i,:));
         copySelected(j,i)=c(minCopy);   
     end
@@ -40,12 +40,15 @@ colorspec = {[0.1 0.1 0.1];[0.9 0.9 0.9]; [0.8 0.8 0.8]; [0.6 0.6 0.6]; ...
   [0.4 0.4 0.4]; [0.2 0.2 0.2] ; [0.3 0.3 0.3] ; [0.9 0.5 0.5];...
   [0.7 0.7 0.7];[0 1.0 0];[0 1.0 0];[1.0 0.5 0]};
 
+colors = distinguishable_colors(length(N),'w');
+
 pointTypes = ['+','o','*','s','d','x','>','h','<','p'];
 colorTypes = ['r','b','k','m','c'];
 
 for i=1:length(N)
     loglog(lambdaSLambdaD,...
-        copySelected(i,:),strcat('-',pointTypes(rem(i,length(pointTypes))+1),colorspec{rem(i,length(colorspec))+1}));
+        copySelected(i,:),strcat('-',pointTypes(rem(i,length(pointTypes))+1)),'color',colors(i,:));
+        %copySelected(i,:),strcat('-',pointTypes(rem(i,length(pointTypes))+1),colorspec{rem(i,length(colorspec))+1}));
     if i==1
         hold on
         xlabel('$\lambda_s / \lambda_d$','Interpreter','latex')

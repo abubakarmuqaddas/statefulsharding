@@ -22,10 +22,17 @@ mDist=mDist(1:Copies);
 
 powersReq=2:1:9;
 N=(10*ones(1,length(powersReq))).^powersReq;
+%l=length(N);
+%for i=1:l-1
+%N=[N (N(i)+N(i+1))/2];
+%end
+%N=sort(N);
 
 lambdaD = 1;
 
-lambdaSLambdaD=0.01:0.05:1;
+%lambdaSLambdaD=[0.01:0.01:0.1 0.15:0.05:1];
+%lambdaSLambdaD=0.1:0.05:1;
+lambdaSLambdaD=[0.01:0.001:0.1 0.15:0.05:1];
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -37,7 +44,7 @@ for j=1:length(N)
     for i=1:length(lambdaSLambdaD)
         syncTfc(j,i,:)=lambdaS(i)*syncDist.*c.*(c-1);
         dataTfc(j,i,:)=lambdaD*N(j)*mDist;
-        totTfc(j,i,:)=syncTfc(j,i,:) + dataTfc(j,i,:);
+        totTfc(j,i,:)=sqrt(N(j)).*(syncTfc(j,i,:) + dataTfc(j,i,:));
         [minTotTfc,minCopy]=min(totTfc(j,i,:));
         copySelected(j,i)=c(minCopy);   
     end
@@ -46,9 +53,13 @@ end
 figure(10)
 hold on
 k=1;
-numLambdaSLambdaD_jumps=4;
+numLambdaSLambdaD_jumps=1;
 
 dataToWrite = N';
+
+colors = distinguishable_colors(length(lambdaSLambdaD),'w');
+
+coEfficient=zeros(1,length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)));
 
 for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
     NversusCopy=zeros(1,length(N));
@@ -56,7 +67,7 @@ for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
         NversusCopy(i)=copySelected(i,j);
     end
     figure(10)
-    plot(N,NversusCopy,strcat('-',pointTypes(rem(k,length(pointTypes))+1),colorspec{rem(k,length(colorspec))+1}))
+    plot(N,NversusCopy,strcat('-',pointTypes(rem(k,length(pointTypes))+1)),'color',colors(k,:))
     if j==1
         figure(10)
         hold on
@@ -67,6 +78,7 @@ for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
     k=k+1;
     p = round(polyfit(log10(N),log10(NversusCopy),1),2);
     display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
+    coEfficient(j)=10^p(2);
 end
 
 numLegendEntry=length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD));
@@ -81,4 +93,9 @@ for iter=1:numLegendEntry
 end
 legend(Legend)
 
-
+figure
+plot(lambdaSLambdaD,coEfficient,'-bd')
+xlabel('$\lambda_s / \lambda_d$','Interpreter','latex')
+ylabel('Coefficient')
+ylim([0 3])
+set(gca, 'FontSize', 15) 

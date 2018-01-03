@@ -22,8 +22,6 @@ N=(10*ones(1,length(powersReq))).^powersReq;
 lambdaForCurveFittingStart=[1 1 1 1 2 3];
 lambdaForCurveFittingEnd=[length(lambdaSLambdaD)-1 length(lambdaSLambdaD)*ones(1,5)];
 
-
-
 copySelected = zeros(length(N),length(lambdaSLambdaD));
 totTfc=zeros(length(N),length(lambdaSLambdaD),length(c));
 syncTfc=zeros(length(N),length(lambdaSLambdaD),length(c));
@@ -33,7 +31,7 @@ for j=1:length(N)
     for i=1:length(lambdaSLambdaD)
         syncTfc(j,i,:)=lambdaS(i)*syncDist.*c.*(c-1);
         dataTfc(j,i,:)=lambdaD*N(j)*mDist;
-        totTfc(j,i,:)=syncTfc(j,i,:) + dataTfc(j,i,:);
+        totTfc(j,i,:)=sqrt(N(j)).*(syncTfc(j,i,:) + dataTfc(j,i,:));
         [minTotTfc,minCopy]=min(totTfc(j,i,:));
         copySelected(j,i)=c(minCopy);   
     end
