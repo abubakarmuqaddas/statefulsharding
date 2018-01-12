@@ -20,6 +20,10 @@ lambdaD = 1;
 %lambdaSLambdaD=0.01:0.01:1;
 lambdaSLambdaD=10.^(-6:1);
 
+x=10e-6:10e-3:1;
+
+lambdaSLambdaD=sort(unique([lambdaSLambdaD x]));
+
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
 totTfc=zeros(length(N),length(lambdaSLambdaD),length(c));

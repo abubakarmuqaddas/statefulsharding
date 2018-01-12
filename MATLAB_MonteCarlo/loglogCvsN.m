@@ -30,9 +30,9 @@ N=(10*ones(1,length(powersReq))).^powersReq;
 
 lambdaD = 1;
 
-%lambdaSLambdaD=0.1:0.05:1;
-%lambdaSLambdaD=[0.01:0.001:0.1 0.15:0.05:1];
-lambdaSLambdaD=[0.032:0.001:0.037];
+%lambdaSLambdaD=10e-6:10e-5:1;
+lambdaSLambdaD=[0.01:0.001:0.1 0.15:0.05:1];
+%lambdaSLambdaD=0.035:0.001:0.036;
 
 lambdaS = lambdaSLambdaD./lambdaD;
 copySelected = zeros(length(N),length(lambdaSLambdaD));
@@ -50,8 +50,8 @@ for j=1:length(N)
     end
 end
 
-figure(10)
-hold on
+%figure(10)
+%hold on
 k=1;
 numLambdaSLambdaD_jumps=1;
 
@@ -77,7 +77,7 @@ for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
     end
     k=k+1;
     p = polyfit(log10(N),log10(NversusCopy),1);
-    %display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
+    display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
     coEfficient(j)=round(10^p(2),2);
 end
 
@@ -94,7 +94,10 @@ end
 legend(Legend)
 
 figure
-plot(lambdaSLambdaD,coEfficient,'-bd')
+plot(lambdaSLambdaD,coEfficient,'bd')
+
+
+
 xlabel('$\lambda_s / \lambda_d$','Interpreter','latex')
 ylabel('Coefficient')
 ylim([0 3])

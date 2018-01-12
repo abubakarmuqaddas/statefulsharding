@@ -16,6 +16,7 @@ lambdaD = 1;
 lambdaSLambdaD=10.^(-6:1);
 lambdaS = lambdaSLambdaD./lambdaD;
 
+
 powersReq=2:1:7;
 N=(10*ones(1,length(powersReq))).^powersReq;
 
@@ -42,7 +43,30 @@ for i=1:length(lambdaForCurveFittingStart)
     yAxis{i}=copySelected(i,lambdaForCurveFittingStart(i):lambdaForCurveFittingEnd(i));
 end
 
+k=[];
+m=[];
 for i=1:length(N)
     p = round(polyfit(log10(xAxis{i}),log10(yAxis{i}),1),2);
+    k=[k (round(10^p(2),2))];
+    m=[m p(1)];
     display(strcat('C=',num2str(round(10^p(2),2)),' \left( \lambda_s/\lambda_d \right)  ^{',num2str(p(1)),'} for N=10^{',num2str(log10(N(i))),'}'))
 end
+
+x=10e-6:10e-3:1;
+newlambdaSLambdaD=sort(unique([lambdaSLambdaD(1:end-1) x]));
+[XN,YL] = meshgrid(N,newlambdaSLambdaD);
+C=zeros(size(XN));
+
+for i=1:size(XN,2)
+    for j=1:size(XN,1)
+        C(j,i)=k(i)* ( (YL(j,i)) ^ (m(i)) );
+    end
+end
+
+surf(XN,YL,C)
+xlabel('N')
+ylabel('$\lambda_s / \lambda_d$','Interpreter','latex')
+zlabel('C')
+set(gca,'XScale','log')
+set(gca,'YScale','log')
+rotate3d on
