@@ -28,7 +28,7 @@ N=(10*ones(1,length(powersReq))).^powersReq;
 %end
 %N=sort(N);
 
-lambdaD = 1;
+lambdaD = 1.0;
 
 %lambdaSLambdaD=10e-6:10e-5:1;
 lambdaSLambdaD=[0.01:0.001:0.1 0.15:0.05:1];
