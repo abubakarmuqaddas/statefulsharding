@@ -46,10 +46,10 @@ end
 k=[];
 m=[];
 for i=1:length(N)
-    p = round(polyfit(log10(xAxis{i}),log10(yAxis{i}),1),2);
-    k=[k (round(10^p(2),2))];
+    p = polyfit(log10(xAxis{i}),log10(yAxis{i}),1);
+    k=[k 10^p(2)];
     m=[m p(1)];
-    display(strcat('C=',num2str(round(10^p(2),2)),' \left( \lambda_s/\lambda_d \right)  ^{',num2str(p(1)),'} for N=10^{',num2str(log10(N(i))),'}'))
+    display(strcat('C=',num2str(10^p(2)),' \left( \lambda_s/\lambda_d \right)  ^{',num2str(p(1)),'} for N=10^{',num2str(log10(N(i))),'}'))
 end
 
 x=10e-6:10e-3:1;
@@ -69,4 +69,11 @@ ylabel('$\lambda_s / \lambda_d$','Interpreter','latex')
 zlabel('C')
 set(gca,'XScale','log')
 set(gca,'YScale','log')
+rotate3d on
+
+logXN=log10(XN);
+logYL=log10(YL);
+logC=log10(C);
+
+[fitresult, gof]=createFit(logXN, logYL, logC);
 rotate3d on
