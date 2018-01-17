@@ -61,38 +61,48 @@ dataToWrite = N';
 colors = distinguishable_colors(length(lambdaSLambdaD),'w');
 
 coEfficient=zeros(1,length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)));
+power=zeros(1,length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)));
 
 for j=1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD)
     NversusCopy=zeros(1,length(N));
     for i=1:length(N)
         NversusCopy(i)=copySelected(i,j);
     end
-    figure(10)
-    plot(N,NversusCopy,strcat('-',pointTypes(rem(k,length(pointTypes))+1)),'color',colors(k,:))
-    if j==1
-        figure(10)
-        hold on
-        xlabel('N')
-        ylabel('Minimum number of copies')
-        set(gca, 'FontSize', 15) 
-    end
-    k=k+1;
+%     figure(10)
+%     plot(N,NversusCopy,strcat('-',pointTypes(rem(k,length(pointTypes))+1)),'color',colors(k,:))
+%     if j==1
+%         figure(10)
+%         hold on
+%         xlabel('N')
+%         ylabel('Minimum number of copies')
+%         set(gca, 'FontSize', 15) 
+%     end
+%     k=k+1;
     p = polyfit(log10(N),log10(NversusCopy),1);
-    display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
-    coEfficient(j)=round(10^p(2),2);
+%    display(strcat('C=',num2str(10^p(2)),'N^{',num2str(p(1)),'} for \frac{\lambda_s}{\lambda_d}=',num2str(lambdaSLambdaD(j))))
+    coEfficient(j)=10^p(2);
+    power(j)=p(1);
 end
 
-numLegendEntry=length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD));
-figure(10)
-set(gca,'XScale','log')
-set(gca,'YScale','log')
-Legend=cell(numLegendEntry,1);
-k=1;
-for iter=1:numLegendEntry
-    Legend{iter}=strcat('\lambda_s / \lambda_d=',num2str(lambdaSLambdaD(k)));
-    k=k+numLambdaSLambdaD_jumps;
-end
-legend(Legend)
+% numLegendEntry=length(1:numLambdaSLambdaD_jumps:length(lambdaSLambdaD));
+% figure(10)
+% set(gca,'XScale','log')
+% set(gca,'YScale','log')
+% Legend=cell(numLegendEntry,1);
+% k=1;
+% for iter=1:numLegendEntry
+%     Legend{iter}=strcat('\lambda_s / \lambda_d=',num2str(lambdaSLambdaD(k)));
+%     k=k+numLambdaSLambdaD_jumps;
+% end
+% legend(Legend)
+
+figure
+plot(lambdaSLambdaD,coEfficient,'bd')
+hold on
+plot(lambdaSLambdaD,power,'ko')
+xlabel('$\lambda_s / \lambda_d$','Interpreter','latex')
+legend('10^k','m')
+set(gca, 'FontSize', 15) 
 
 figure
 plot(lambdaSLambdaD,coEfficient,'bd')

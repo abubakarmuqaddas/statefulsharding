@@ -74,11 +74,12 @@ set(gca,'YScale','log')
 rotate3d on
 
 
-logXN=log10(XN);
-logYL=log10(YL);
+logN=log10(XN);
+logLambdaSoverLambdaD=log10(YL);
 logC=log10(C);
 
-[fitresult, gof]=createFit(logXN, logYL, logC);
+[fitresult, gof]=createFit(logN, logLambdaSoverLambdaD, logC);
 rotate3d on
+set(gca, 'FontSize', 15) 
 
 
