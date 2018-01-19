@@ -60,7 +60,7 @@ public class BruteForceCorrect {
         ArrayList<Vertex> bestCombination = new ArrayList<>();
         double bestSyncTraffic = 0;
 
-        String initial2 = "../Dropbox/PhD_Work/Stateful_SDN/snapsharding/";
+        String initial2 = "../z/PhD_Work/Stateful_SDN/snapsharding/";
 
         /*
         String trafficFile = initial2 +
@@ -203,10 +203,7 @@ public class BruteForceCorrect {
                         LinkedList<LinkedList<Integer>> combSizeCombinations = allCombinations.get(combSize);
                         for (LinkedList<Integer> combination : combSizeCombinations) {
 
-                            ArrayList<Vertex> vertices = new ArrayList<>();
-                            for (Integer integer : combination) {
-                                vertices.add(graph.getVertex(integer));
-                            }
+                            ArrayList<Vertex> vertices = getVerticesFromInteger(graph, combination);
 
                             double currentTraffic = 0.0;
 
@@ -379,6 +376,17 @@ public class BruteForceCorrect {
             }
         }
         return syncTraffic;
+
+    }
+
+    private static ArrayList<Vertex> getVerticesFromInteger(ListGraph graph, LinkedList<Integer> integers){
+
+        ArrayList<Vertex> vertices = new ArrayList<>();
+        for (Integer integer : integers) {
+            vertices.add(graph.getVertex(integer));
+        }
+
+        return vertices;
 
     }
 

@@ -16,9 +16,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
 
-/**
- * Created by root on 5/22/17.
- */
 public class SNAPDependency {
 
     private ListGraph graph;
