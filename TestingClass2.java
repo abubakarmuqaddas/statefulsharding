@@ -6,6 +6,7 @@ import statefulsharding.Traffic.TrafficStore;
 import statefulsharding.graph.ListGraph;
 import statefulsharding.graph.Vertex;
 import statefulsharding.graph.algorithms.ShortestPath;
+import statefulsharding.graph.algorithms.StatAlgorithms;
 import statefulsharding.graph.algorithms.getNCombinations;
 import statefulsharding.randomgraphgen.ManhattanGraphGen;
 
@@ -19,12 +20,12 @@ public class TestingClass2 {
 
 
         boolean copySameSwitchAllowed = false;
-        double alpha=0.05;
+        double alpha=0.09;
         int capacity = Integer.MAX_VALUE;
 
         int trafficStart = 1;
         int trafficEnd = 100;
-        int numCopies = 6;
+        int numCopies = 5;
         int size = 4;
         ArrayList<Vertex> bestCombination = new ArrayList<>();
 
@@ -140,6 +141,9 @@ public class TestingClass2 {
                             + syncTraffic.get(i));
 
         }
+
+        System.out.println("Mean Traffic: " + StatAlgorithms.Mean(bestTraffic) + ", ConfInterval: " +
+            StatAlgorithms.ConfIntervals(bestTraffic,96).getSecond());
 
     }
 
