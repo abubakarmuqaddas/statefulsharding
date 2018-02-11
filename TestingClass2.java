@@ -20,12 +20,12 @@ public class TestingClass2 {
 
 
         boolean copySameSwitchAllowed = false;
-        double alpha=0.05;
+        double alpha=0.9;
         int capacity = Integer.MAX_VALUE;
 
         int trafficStart = 1;
         int trafficEnd = 100;
-        int numCopies = 5;
+        int numCopies = 4;
         int size = 5;
         ArrayList<Vertex> bestCombination = new ArrayList<>();
 
