@@ -15,19 +15,20 @@ import statefulsharding.randomgraphgen.ManhattanGraphGen;
 import java.util.*;
 
 /**
- * Evaluate Traffic Heuristic Local Search Realistic sync restructured
+ * Evaluate Traffic Heuristic Local Search - sync multiplier = 1 , to compare with analytical
+ * C = 0.47 * N^0.40 * (lambdaS/lambdaD)^(-0.40)
  */
 
 
-public class NewTfcHeur_ChooseDiffCopy{
+public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
 
     private static double syncAlpha = 0.05;
 
     public static void main(String[] args){
 
-        int size = 9;
-        int startCopies = 16;
-        int endCopies = 16;
+        int size = 10;
+        int startCopies = 2;
+        int endCopies = 2;
         int startTraffic = 1;
         int endTraffic = 10;
         int startPartitionRuns = 1;
@@ -179,11 +180,7 @@ public class NewTfcHeur_ChooseDiffCopy{
                         SyncTfcCol.get(numCopies).add(bestSyncTraffic);
                         copiesUsedCol.get(numCopies).add((double)bestUsedCopies.size());
 
-                        AvgPathLengthCol.get(numCopies).putIfAbsent(bestUsedCopies.size(), new ArrayList<>());
-                        AvgPathLengthCol
-                                .get(numCopies)
-                                .get(bestUsedCopies.size())
-                                .add(getAveragePathLength(bestUsedCopies, graph));
+
                         /*
                         System.out.println("NumCopiesUsed: " + bestUsedCopies.size() +
 
@@ -229,7 +226,7 @@ public class NewTfcHeur_ChooseDiffCopy{
 
     }
 
-    public static double routeTraffic(ArrayList<Vertex> copies,
+    private static double routeTraffic(ArrayList<Vertex> copies,
                                HashMap<Vertex, HashMap<Vertex, Integer>> dist,
                                TrafficStore trafficStore){
 
@@ -325,14 +322,6 @@ public class NewTfcHeur_ChooseDiffCopy{
     private static double getSyncTraffic(ArrayList<Vertex> copies, ListGraph graph,
                                          TrafficStore trafficStore){
 
-        HashMap<Vertex, Integer> occurrence = new HashMap<>();
-
-        copies.forEach(vertex -> occurrence.put(vertex, 0));
-
-        for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
-            occurrence.put(trafficDemand.getCopy(), occurrence.get(trafficDemand.getCopy())+1);
-        }
-
         double syncTraffic = 0.0;
 
         for (int i = 0; i < copies.size(); i++) {
@@ -341,11 +330,8 @@ public class NewTfcHeur_ChooseDiffCopy{
                 if (i == j)
                     continue;
 
-                int multiplier = occurrence.get(copies.get(i));
-
                 try {
                     syncTraffic += syncAlpha *
-                            multiplier *
                             ShortestPath.dijsktra(graph, copies.get(i), copies.get(j))
                                     .getSize();
                 }
@@ -375,19 +361,7 @@ public class NewTfcHeur_ChooseDiffCopy{
         return contains;
     }
 
-    private static double getAveragePathLength(ArrayList<Vertex> vertices, ListGraph graph){
 
-        double totalPathLength = 0;
-
-        for(Vertex vertex1 : vertices){
-            for(Vertex vertex2 : vertices){
-                if(!vertex1.equals(vertex2)){
-                    totalPathLength += ShortestPath.dijsktra(graph,vertex1,vertex2).getSize();
-                }
-            }
-        }
-        return totalPathLength/(vertices.size()*(vertices.size()-1));
-    }
 
 
 }
