@@ -222,6 +222,7 @@ public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
             }
         }
 
+        System.out.println("Test");
 
 
     }
