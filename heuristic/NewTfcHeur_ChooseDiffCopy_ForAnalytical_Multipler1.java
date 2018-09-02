@@ -22,13 +22,13 @@ import java.util.*;
 
 public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
 
-    private static double syncAlpha = 0.05;
+    private static double syncAlpha = 0.6;
 
     public static void main(String[] args){
 
-        int size = 10;
+        int size = 6;
         int startCopies = 2;
-        int endCopies = 2;
+        int endCopies = 4;
         int startTraffic = 1;
         int endTraffic = 10;
         int startPartitionRuns = 1;
@@ -193,7 +193,7 @@ public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
             }
         }
 
-        System.out.println("NumCopies TotalTfcMean DataTfcMean SyncTfcMean copiesUsedMean");
+        System.out.println("NumCopies TotalTfcMean DataTfcMean SyncTfcMean");
 
         for (int numCopies = startCopies; numCopies <= endCopies; numCopies++){
 
@@ -206,11 +206,12 @@ public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
                     numCopies + " " +
                             StatAlgorithms.round2(totalTraffic.getFirst()) + " " +
                             StatAlgorithms.round2(dataTraffic.getFirst()) + " " +
-                            StatAlgorithms.round2(syncTraffic.getFirst()) + " " +
-                            StatAlgorithms.round2(copiesUsed.getFirst())
+                            StatAlgorithms.round2(syncTraffic.getFirst())
+                          + " " + StatAlgorithms.round2(copiesUsed.getFirst())
             );
         }
 
+        /*
         System.out.println("NumCopies UsedCopies AvgPathLength");
         for (int numCopies = startCopies; numCopies <= endCopies; numCopies++) {
             System.out.println("----------");
@@ -221,8 +222,7 @@ public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
                         StatAlgorithms.round2(AvgPathLength.getFirst()));
             }
         }
-
-        System.out.println("Test");
+        */
 
 
     }
