@@ -20,13 +20,15 @@ public class TestingClass2 {
 
 
         boolean copySameSwitchAllowed = false;
-        double alpha=0.9;
+        double alphaStart=0.1;
+        double alphaEnd=1.0;
         int capacity = Integer.MAX_VALUE;
 
         int trafficStart = 1;
         int trafficEnd = 100;
-        int numCopies = 4;
-        int size = 5;
+        int numCopiesStart = 2;
+        int numCopiesEnd = 5;
+        int size = 4;
         ArrayList<Vertex> bestCombination = new ArrayList<>();
 
         double minCombination = Double.MAX_VALUE;
@@ -56,82 +58,90 @@ public class TestingClass2 {
          * Generate all state combinations
          */
 
-        LinkedList<LinkedList<Integer>> combinations;
+        for(int numCopies = numCopiesStart; numCopies<= numCopiesEnd; numCopies++) {
 
-        if (copySameSwitchAllowed) {
-            combinations = getNCombinations.getPermutations(numCopies, graph.getVerticesInt());
-        }
-        else {
-            combinations = getNCombinations.getCombinations(graph.getVerticesInt(), numCopies);
-        }
+            for(double alpha = alphaStart ; alpha <= alphaEnd ; alpha += 0.1) {
 
-        LinkedList<Double> bestTraffic = new LinkedList<>();
-        LinkedList<Double> syncTraffic = new LinkedList<>();
+                LinkedList<LinkedList<Integer>> combinations;
 
-        // Single traffic no
+                if (copySameSwitchAllowed) {
+                    combinations = getNCombinations.getPermutations(numCopies, graph.getVerticesInt());
+                } else {
+                    combinations = getNCombinations.getCombinations(graph.getVerticesInt(), numCopies);
+                }
 
-        for (int trafficNo = trafficStart; trafficNo <= trafficEnd; trafficNo++) {
+                LinkedList<Double> bestTraffic = new LinkedList<>();
+                LinkedList<Double> syncTraffic = new LinkedList<>();
 
-            TrafficStore trafficStore = new TrafficStore();
-            TrafficGenerator.fromFileLinebyLine(
-                    graph,
-                    trafficStore,
-                    trafficNo,
-                    1,
-                    false,
-                    trafficFile
-            );
+                // Single traffic no
 
-            for (LinkedList<Integer> combination : combinations) {
+                for (int trafficNo = trafficStart; trafficNo <= trafficEnd; trafficNo++) {
 
-                ArrayList<Vertex> vertices = getVerticesFromInteger(graph, combination);
+                    TrafficStore trafficStore = new TrafficStore();
+                    TrafficGenerator.fromFileLinebyLine(
+                            graph,
+                            trafficStore,
+                            trafficNo,
+                            1,
+                            false,
+                            trafficFile
+                    );
 
-                double currentTraffic = 0.0;
+                    for (LinkedList<Integer> combination : combinations) {
 
-                for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                        ArrayList<Vertex> vertices = getVerticesFromInteger(graph, combination);
 
-                    Vertex source = trafficDemand.getSource();
-                    Vertex destination = trafficDemand.getDestination();
+                        double currentTraffic = 0.0;
 
-                    int minDist = Integer.MAX_VALUE;
+                        for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
-                    for (Vertex vertex : vertices) {
+                            Vertex source = trafficDemand.getSource();
+                            Vertex destination = trafficDemand.getDestination();
 
-                        int currentDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
-                        if (currentDist < minDist) {
-                            minDist = currentDist;
+                            int minDist = Integer.MAX_VALUE;
+
+                            for (Vertex vertex : vertices) {
+
+                                int currentDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
+                                if (currentDist < minDist) {
+                                    minDist = currentDist;
+                                }
+                            }
+
+                            currentTraffic += minDist;
+                        }
+
+                        double currentSyncTraffic = alpha * getSyncTraffic(vertices, graph);
+                        currentTraffic += currentSyncTraffic;
+
+                        if (currentTraffic < minCombination) {
+                            bestCombination = new ArrayList<>(vertices);
+                            minCombination = currentTraffic;
+                            bestSyncTraffic = currentSyncTraffic;
                         }
                     }
 
-                    currentTraffic += minDist;
-                }
-
-                double currentSyncTraffic = alpha * getSyncTraffic(vertices, graph);
-                currentTraffic += currentSyncTraffic;
-
-                if (currentTraffic < minCombination) {
-                    bestCombination = new ArrayList<>(vertices);
-                    minCombination = currentTraffic;
-                    bestSyncTraffic = currentSyncTraffic;
-                }
-            }
-
+            /*
             System.out.print("[");
             for(Vertex vertex : bestCombination){
                 System.out.print(vertex.getLabel() + ", ");
             }
             System.out.print("] ");
             System.out.println();
+            */
 
-            bestTraffic.add(minCombination);
-            syncTraffic.add(bestSyncTraffic);
-
-            minCombination = Integer.MAX_VALUE;
+                    //System.out.println("Traffic No: " + trafficNo);
 
 
+                    bestTraffic.add(minCombination);
+                    syncTraffic.add(bestSyncTraffic);
 
-        }
+                    minCombination = Integer.MAX_VALUE;
 
+
+                }
+
+        /*
         System.out.println("totalTraffic dataTraffic syncTraffic");
 
         for (int i = 0; i < bestTraffic.size(); i++) {
@@ -141,9 +151,18 @@ public class TestingClass2 {
                             + syncTraffic.get(i));
 
         }
+        */
 
-        System.out.println("Mean Traffic: " + StatAlgorithms.Mean(bestTraffic) + ", ConfInterval: " +
-            StatAlgorithms.ConfIntervals(bestTraffic,96).getSecond());
+                System.out.println("Alpha:  " + StatAlgorithms.round2(alpha) + ", NumCopies: " + numCopies +
+                        ", Mean Traffic: " + StatAlgorithms.round2(StatAlgorithms.Mean(bestTraffic)) //+ ", ConfInterval: " +
+                //        StatAlgorithms.ConfIntervals(bestTraffic, 96).getSecond()
+                );
+
+            }
+
+        }
+
+
 
     }
 

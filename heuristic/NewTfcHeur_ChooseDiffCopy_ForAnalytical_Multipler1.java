@@ -22,13 +22,13 @@ import java.util.*;
 
 public class NewTfcHeur_ChooseDiffCopy_ForAnalytical_Multipler1{
 
-    private static double syncAlpha = 0.6;
+    private static double syncAlpha = 0.5;
 
     public static void main(String[] args){
 
-        int size = 6;
-        int startCopies = 2;
-        int endCopies = 4;
+        int size = 11;
+        int startCopies = 6;
+        int endCopies = 6;
         int startTraffic = 1;
         int endTraffic = 10;
         int startPartitionRuns = 1;
