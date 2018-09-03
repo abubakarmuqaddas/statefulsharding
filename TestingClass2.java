@@ -28,98 +28,103 @@ public class TestingClass2 {
         int trafficEnd = 100;
         int numCopiesStart = 2;
         int numCopiesEnd = 5;
-        int size = 4;
+        int sizeStart = 5;
+        int sizeEnd = 6;
         ArrayList<Vertex> bestCombination = new ArrayList<>();
 
         double minCombination = Double.MAX_VALUE;
         double bestSyncTraffic = 0;
 
         String initial2 = "../Google Drive/PhD_Work/Stateful_SDN/snapsharding/";
-        String trafficFile = initial2 +
-                "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
-                ".csv";
 
-        /*
-         * Generate graph
-         */
+        for(int size = sizeStart; size<=sizeEnd ; size++) {
 
-        ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
-                ManhattanGraphGen.mType.UNWRAPPED, false, true);
-        ListGraph graph = manhattanGraphGen.getManhattanGraph();
+            String trafficFile = initial2 +
+                    "topologies_traffic/Traffic/Manhattan_Traffic/Manhattan_Unwrapped_Traffic" + size +
+                    ".csv";
 
-        /*
-         * Generate distances from all vertices
-         */
+            /*
+             * Generate graph
+             */
+            
+            ManhattanGraphGen manhattanGraphGen = new ManhattanGraphGen(size, capacity,
+                    ManhattanGraphGen.mType.UNWRAPPED, false, true);
+            ListGraph graph = manhattanGraphGen.getManhattanGraph();
 
-        HashMap<Vertex, HashMap<Vertex, Integer>> dist =
-                ShortestPath.FloydWarshall(graph, false, null);
+            /*
+             * Generate distances from all vertices
+             */
 
-        /*
-         * Generate all state combinations
-         */
+            HashMap<Vertex, HashMap<Vertex, Integer>> dist =
+                    ShortestPath.FloydWarshall(graph, false, null);
 
-        for(int numCopies = numCopiesStart; numCopies<= numCopiesEnd; numCopies++) {
+            /*
+             * Generate all state combinations
+             */
 
-            for(double alpha = alphaStart ; alpha <= alphaEnd ; alpha += 0.1) {
 
-                LinkedList<LinkedList<Integer>> combinations;
+            for (int numCopies = numCopiesStart; numCopies <= numCopiesEnd; numCopies++) {
 
-                if (copySameSwitchAllowed) {
-                    combinations = getNCombinations.getPermutations(numCopies, graph.getVerticesInt());
-                } else {
-                    combinations = getNCombinations.getCombinations(graph.getVerticesInt(), numCopies);
-                }
+                for (double alpha = alphaStart; alpha <= alphaEnd; alpha += 0.1) {
 
-                LinkedList<Double> bestTraffic = new LinkedList<>();
-                LinkedList<Double> syncTraffic = new LinkedList<>();
+                    LinkedList<LinkedList<Integer>> combinations;
 
-                // Single traffic no
+                    if (copySameSwitchAllowed) {
+                        combinations = getNCombinations.getPermutations(numCopies, graph.getVerticesInt());
+                    } else {
+                        combinations = getNCombinations.getCombinations(graph.getVerticesInt(), numCopies);
+                    }
 
-                for (int trafficNo = trafficStart; trafficNo <= trafficEnd; trafficNo++) {
+                    LinkedList<Double> bestTraffic = new LinkedList<>();
+                    LinkedList<Double> syncTraffic = new LinkedList<>();
 
-                    TrafficStore trafficStore = new TrafficStore();
-                    TrafficGenerator.fromFileLinebyLine(
-                            graph,
-                            trafficStore,
-                            trafficNo,
-                            1,
-                            false,
-                            trafficFile
-                    );
+                    // Single traffic no
 
-                    for (LinkedList<Integer> combination : combinations) {
+                    for (int trafficNo = trafficStart; trafficNo <= trafficEnd; trafficNo++) {
 
-                        ArrayList<Vertex> vertices = getVerticesFromInteger(graph, combination);
+                        TrafficStore trafficStore = new TrafficStore();
+                        TrafficGenerator.fromFileLinebyLine(
+                                graph,
+                                trafficStore,
+                                trafficNo,
+                                1,
+                                false,
+                                trafficFile
+                        );
 
-                        double currentTraffic = 0.0;
+                        for (LinkedList<Integer> combination : combinations) {
 
-                        for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
+                            ArrayList<Vertex> vertices = getVerticesFromInteger(graph, combination);
 
-                            Vertex source = trafficDemand.getSource();
-                            Vertex destination = trafficDemand.getDestination();
+                            double currentTraffic = 0.0;
 
-                            int minDist = Integer.MAX_VALUE;
+                            for (TrafficDemand trafficDemand : trafficStore.getTrafficDemands()) {
 
-                            for (Vertex vertex : vertices) {
+                                Vertex source = trafficDemand.getSource();
+                                Vertex destination = trafficDemand.getDestination();
 
-                                int currentDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
-                                if (currentDist < minDist) {
-                                    minDist = currentDist;
+                                int minDist = Integer.MAX_VALUE;
+
+                                for (Vertex vertex : vertices) {
+
+                                    int currentDist = dist.get(source).get(vertex) + dist.get(vertex).get(destination);
+                                    if (currentDist < minDist) {
+                                        minDist = currentDist;
+                                    }
                                 }
+
+                                currentTraffic += minDist;
                             }
 
-                            currentTraffic += minDist;
-                        }
+                            double currentSyncTraffic = alpha * getSyncTraffic(vertices, graph);
+                            currentTraffic += currentSyncTraffic;
 
-                        double currentSyncTraffic = alpha * getSyncTraffic(vertices, graph);
-                        currentTraffic += currentSyncTraffic;
-
-                        if (currentTraffic < minCombination) {
-                            bestCombination = new ArrayList<>(vertices);
-                            minCombination = currentTraffic;
-                            bestSyncTraffic = currentSyncTraffic;
+                            if (currentTraffic < minCombination) {
+                                bestCombination = new ArrayList<>(vertices);
+                                minCombination = currentTraffic;
+                                bestSyncTraffic = currentSyncTraffic;
+                            }
                         }
-                    }
 
             /*
             System.out.print("[");
@@ -130,36 +135,38 @@ public class TestingClass2 {
             System.out.println();
             */
 
-                    //System.out.println("Traffic No: " + trafficNo);
+                        //System.out.println("Traffic No: " + trafficNo);
 
 
-                    bestTraffic.add(minCombination);
-                    syncTraffic.add(bestSyncTraffic);
+                        bestTraffic.add(minCombination);
+                        syncTraffic.add(bestSyncTraffic);
 
-                    minCombination = Integer.MAX_VALUE;
+                        minCombination = Integer.MAX_VALUE;
 
+
+                    }
+
+                    /*
+                    System.out.println("totalTraffic dataTraffic syncTraffic");
+
+                    for (int i = 0; i < bestTraffic.size(); i++) {
+                        System.out.println(//currentAlpha + " " +
+                                bestTraffic.get(i) + " "
+                                        + (bestTraffic.get(i) - syncTraffic.get(i)) + " "
+                                        + syncTraffic.get(i));
+
+                    }
+                    */
+
+                    System.out.println("Size: " + size + ", Alpha:  " + StatAlgorithms.round2(alpha) + ", NumCopies: "
+                                    + numCopies +
+                                    ", Mean Traffic: " + StatAlgorithms.round2(StatAlgorithms.Mean(bestTraffic))
+                            //+ ", ConfInterval: " +
+                            //        StatAlgorithms.ConfIntervals(bestTraffic, 96).getSecond()
+                    );
 
                 }
-
-        /*
-        System.out.println("totalTraffic dataTraffic syncTraffic");
-
-        for (int i = 0; i < bestTraffic.size(); i++) {
-            System.out.println(//currentAlpha + " " +
-                    bestTraffic.get(i) + " "
-                            + (bestTraffic.get(i) - syncTraffic.get(i)) + " "
-                            + syncTraffic.get(i));
-
-        }
-        */
-
-                System.out.println("Alpha:  " + StatAlgorithms.round2(alpha) + ", NumCopies: " + numCopies +
-                        ", Mean Traffic: " + StatAlgorithms.round2(StatAlgorithms.Mean(bestTraffic)) //+ ", ConfInterval: " +
-                //        StatAlgorithms.ConfIntervals(bestTraffic, 96).getSecond()
-                );
-
             }
-
         }
 
 
