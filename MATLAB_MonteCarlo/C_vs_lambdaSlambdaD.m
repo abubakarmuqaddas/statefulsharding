@@ -12,13 +12,13 @@ c=c(1:Copies);
 syncDist=syncDist(1:Copies);
 mDist=mDist(1:Copies);
 
-powersReq=2:1:14;
+powersReq=2:1:10;
 N=(10*ones(1,length(powersReq))).^powersReq;
 
 lambdaD = 1;
 
-%lambdaSLambdaD=0.01:0.01:1;
-lambdaSLambdaD=10.^(-6:1);
+lambdaSLambdaD=0.01:0.01:1;
+%lambdaSLambdaD=10.^(-6:1);
 
 %x=10e-6:10e-3:1;
 

@@ -4,7 +4,7 @@ clc
 
 
 % Number of copies
-c=(2:10).^2;
+c=(2:2).^2;
 
 % Initialize dist matrix
 syncDist = zeros(1, length(c));
@@ -13,8 +13,8 @@ for iter=1:length(c)
 
     width=1/sqrt(c(iter));
 
-    xCoords = (0:width:0.99999999)+ width/2;
-    yCoords = (0:width:0.99999999)+ width/2;
+    xCoords = (0:width:0.99999999)+ width/2
+    yCoords = (0:width:0.99999999)+ width/2
     [X,Y]=meshgrid(xCoords,yCoords);
     cP=[X(:) Y(:)];
 

@@ -7,7 +7,7 @@ clc
 c=(2:20).^2;
 
 % Number of inner iterations
-numIters = 10000000;
+numIters = 1000000;
 
 % Initialize dist matrix
 dist = zeros(numIters, length(c));
@@ -39,10 +39,11 @@ for i=1:length(c)
 end
 
 plot(c,mean(dist),'-ok')
-line([0,max(c)],[0.5412,0.5412])
+%line([0,max(c)],[0.5412,0.5412])
 hold on
 ylim([0 1])
 
+pause 
 
 syncDist = zeros(1, length(c));
 
@@ -75,7 +76,7 @@ end
 
 plot(c,syncDist,'-*r')
 
-plot(c,0.05*syncDist.*c.*(c-1),'-ok')
-hold on
-plot(c,0.05*100*mean(dist),'-*r')
-plot(c,0.5*100*mean(dist)+0.01*syncDist.*c.*(c-1),'-xb')
+%plot(c,0.05*syncDist.*c.*(c-1),'-ok')
+%hold on
+%plot(c,0.05*100*mean(dist),'-*r')
+%plot(c,0.5*100*mean(dist)+0.01*syncDist.*c.*(c-1),'-xb')

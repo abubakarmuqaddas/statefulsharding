@@ -27,11 +27,11 @@ ft = fittype( 'poly11' );
 % Plot fit with data.
 figure( 'Name', 'untitled fit 1' );
 h = plot( fitresult, [xData, yData], zData );
-leg1=legend( h, 'Plane fitting the data', '$\log_{10}C$ vs. $\log_{10}N$, $\log_{10}(\lambda_s / \lambda_d)$', 'Location', 'NorthEast' );
+leg1=legend( h, 'Plane fitting the data', '$\log_{10}C$ vs. $\log_{10}N$, $\log_{10}(\hat{\lambda}_s / \lambda_f)$', 'Location', 'NorthEast' );
 set(leg1,'Interpreter','latex');
 % Label axes
 xlabel('$\log_{10}N$','Interpreter','latex')
-ylabel('$\log_{10}(\lambda_s / \lambda_d)$','Interpreter','latex')
+ylabel('$\log_{10}(\hat{\lambda}_s / \lambda_f)$','Interpreter','latex')
 zlabel('$\log_{10}C$','Interpreter','latex')
 grid on
 view( 151.7, 23.6 );
